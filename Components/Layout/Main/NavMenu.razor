@@ -55,6 +55,10 @@
 
                 </MudNavGroup>
             }
+            else if (CurrentUrl != null && MenuUrls.Contains(CurrentUrl))
+            {
+                <MudNavLink Href="/audit" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Assignment"> Audit Log </MudNavLink>
+            }
 
         </AuthorizeView>
 
