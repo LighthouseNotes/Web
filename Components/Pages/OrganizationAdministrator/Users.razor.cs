@@ -3,6 +3,7 @@ using Auth0.ManagementApi;
 using Auth0.ManagementApi.Models;
 using Auth0.ManagementApi.Paging;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MudBlazor;
 using Web.Components.Dialogs;
 
@@ -18,19 +19,37 @@ public class UsersBase : ComponentBase
     [Inject] private AuthenticationStateProvider AuthenticationState { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private IConfiguration Configuration { get; set; } = default!;
-
+    [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
+    
     // Page variables
     protected PageLoad? PageLoad;
     protected string RoleSelectValue = "Nothing selected";
     protected List<API.User> Users = null!;
     protected string? SearchString;
     protected readonly InviteUserForm Model = new();
+    
+    private Models.Settings _settings = new();
 
     protected class InviteUserForm
     {
         [Required(AllowEmptyStrings = false)] public string EmailAddress { get; set; } = null!;
 
         public IEnumerable<string> Roles { get; set; } = new List<string> { "user" };
+    }
+    
+    // Page rendered
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Get user settings from browser storage
+            ProtectedBrowserStorageResult<Models.Settings> result =
+                await ProtectedLocalStore.GetAsync<Models.Settings>("settings");
+
+            // If result is success and not null assign value from browser storage, if result is success and null assign default values, if result is unsuccessful assign default values
+            _settings = result.Success ? result.Value ?? new Models.Settings() : new Models.Settings();
+            
+        }
     }
 
     // Page initialized
@@ -105,13 +124,17 @@ public class UsersBase : ComponentBase
             switch (role)
             {
                 case "user":
-                    newUserRoles.Add("rol_B3kaTD0xYxF2uL2j");
+                    newUserRoles.Add(Configuration["Auth0:Roles:user"] ??
+                                     throw new InvalidOperationException("Auth0:Roles:user not found in appsettings.json!"));
                     break;
                 case "sio":
-                    newUserRoles.Add("rol_csvHRXumZSCUh7pg");
+                    newUserRoles.Add(Configuration["Auth0:Roles:sio"] ??
+                                     throw new InvalidOperationException("Auth0:Roles:sio not found in appsettings.json!"));
                     break;
                 case "organization-administrator":
-                    newUserRoles.Add("rol_aG0zsYOLfqWORPsq");
+                    newUserRoles.Add(Configuration["Auth0:Roles:organization-administrator"] ??
+                                     throw new InvalidOperationException(
+                                         "Auth0:Roles:organization-administrator not found in appsettings.json!"));
                     break;
             }
 
@@ -165,11 +188,7 @@ public class UsersBase : ComponentBase
 
         // Get organization id from JWT
         string? organizationId = authenticationState.User.Claims.FirstOrDefault(c => c.Type == "org_id")?.Value;
-
-        // Get user id from JWT
-        string? userId = authenticationState.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)
-            ?.Value;
-
+        
         // Create a base list of roles
         List<string> roles = new()
         {
@@ -180,13 +199,13 @@ public class UsersBase : ComponentBase
         // If form contains the role SIO add the role ID
         if (Model.Roles.Contains("sio"))
             roles.Add(Configuration["Auth0:Roles:sio"] ??
-                      throw new InvalidOperationException("Auth0:Roles:sio not found in appsettings.json!")); // SIO
+                      throw new InvalidOperationException("Auth0:Roles:sio not found in appsettings.json!"));
 
         // If the form contains the role organization administrator add the role ID
         if (Model.Roles.Contains("organization-administrator"))
             roles.Add(Configuration["Auth0:Roles:organization-administrator"] ??
                       throw new InvalidOperationException(
-                          "Auth0:Roles:organization-administrator not found in appsettings.json!")); // Organization Administrator
+                          "Auth0:Roles:organization-administrator not found in appsettings.json!"));
 
         // Create invite
         await AuthOManagementClient.Organizations.CreateInvitationAsync(organizationId,
@@ -201,7 +220,7 @@ public class UsersBase : ComponentBase
                 // Inviter
                 Inviter = new OrganizationInvitationInviter
                 {
-                    Name = Users.First(u => u.Id == userId).DisplayName
+                    Name = Users.First(u => u.Id == _settings.UserId).DisplayName
                 },
 
                 // Web App Client ID
