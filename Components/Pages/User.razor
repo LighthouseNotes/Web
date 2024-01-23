@@ -1,0 +1,55 @@
+﻿@page "/user/{UserId}"
+@using System.Globalization
+@inherits UserBase
+@attribute [Authorize(Roles = "user")]
+<PageLoad @ref="PageLoad">
+    <PageTitle> @User.DisplayName </PageTitle>
+
+    @* User details *@
+    <MudGrid class="justify-center my-3">
+        <MudItem xs="12" sm="6" md="5" xxl="5">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Square="true">
+                            <MudImage Height="45" Src="@User.ProfilePicture" ObjectFit="ObjectFit.ScaleDown"></MudImage>
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6"> @User.DisplayName </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>
+                        <b> Given Name & Last Name: </b> @User.GivenName @User.LastName
+                    </MudText>
+                    <MudText>
+                        <b> Email Address: </b> @User.EmailAddress
+                    </MudText>
+                    <MudText>
+                        <b> Organization: </b> @User.Organization.DisplayName
+                    </MudText>
+                    <MudText>
+                        <b> Job Title: </b> @User.JobTitle
+                    </MudText>
+                    <MudText>
+                        <b> Roles: </b>
+                    </MudText>
+                    <MudChipSet>
+                        @foreach (string role in User.Roles)
+                        {
+                            if (role == "sio")
+                            {
+                                <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToUpper(role) </MudChip>
+                            }
+                            else
+                            {
+                                <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(role) </MudChip>
+                            }
+                        }
+                    </MudChipSet>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</PageLoad>

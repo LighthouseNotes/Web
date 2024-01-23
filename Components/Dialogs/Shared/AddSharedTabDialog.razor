@@ -1,0 +1,19 @@
+﻿@inherits AddSharedTabDialogBase
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="Model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator/>
+            <MudCard Elevation="0">
+                <MudCardContent>
+                    <MudTextField Label="Tab Name" @bind-Value="Model.Name" For="@(() => Model.Name)" HelperText="Max. 40 characters"/>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"> Add </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>

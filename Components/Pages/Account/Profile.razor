@@ -1,0 +1,91 @@
+﻿@page "/account/profile"
+@using System.Globalization
+@inherits ProfileBase
+@attribute [Authorize(Roles = "user")]
+<PageTitle> Profile </PageTitle>
+<PageLoad @ref="PageLoad">
+
+    <MudText Typo="Typo.h2" Align="Align.Center"> Profile </MudText>
+
+    <MudText Typo="Typo.subtitle1" Align="Align.Center"> Use the form below to edit your Lighthouse notes profile </MudText>
+
+    <MudGrid Class="justify-center">
+        <MudItem xs="12" sm="6">
+
+            <MudCard>
+                <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
+                    <DataAnnotationsValidator/>
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Square="true">
+                                <MudImage Height="45" Src="@User.ProfilePicture" ObjectFit="ObjectFit.ScaleDown"></MudImage>
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6"> @User.DisplayName </MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTextField Label="Given Name"
+                                      @bind-Value="Model.GivenName" For="@(() => Model.GivenName)"/>
+                        <MudTextField Label="Last name"
+                                      @bind-Value="Model.LastName" For="@(() => Model.LastName)"/>
+                        <MudTextField Label="Display name"
+                                      @bind-Value="Model.DisplayName" For="@(() => Model.DisplayName)"/>
+                        <MudTextField Label="Email address"
+                                      @bind-Value="Model.EmailAddress" For="@(() => Model.EmailAddress)" Disabled="true"/>
+                        <MudTextField Label="Job title"
+                                      @bind-Value="Model.JobTitle" For="@(() => Model.JobTitle)"/>
+                        <MudChipSet>
+                            @foreach (string role in User.Roles)
+                            {
+                                if (role == "sio")
+                                {
+                                    <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToUpper(role) </MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(role) </MudChip>
+                                }
+                            }
+                        </MudChipSet>
+                    </MudCardContent>
+                    <MudCardActions >
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"> Submit </MudButton>
+                    </MudCardActions>
+                </EditForm>
+            </MudCard>
+
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudCard>
+                <MudCardContent>
+                    <MudText Typo="Typo.h2" Align="Align.Center"> Profile picture </MudText>
+                    <MudText Typo="Typo.subtitle1" Align="Align.Center"> To change your profile picture, please follow the below instructions </MudText>
+                    <MudText Typo="Typo.h6" Align="Align.Center"> Social / Company Login </MudText>
+                    <MudText Style="margin: 1em;">
+                        If you wish to change your profile picture and login with Social provider e.g. Google, Facebook ect or a Company Login e.g. Microsoft 365 then you just need to update the profile picture on their side and then press the "Sync Profile Picture" button at the bottom of this page
+                    </MudText>
+
+                    <MudText Typo="Typo.h6" Align="Align.Center"> Email & Password Login </MudText>
+                    <MudText Style="margin: 1em;">
+                        If you wish to change your profile picture and you login with an email and password, follow the instructions below...
+                        <ol style="padding: 1em;">
+                            <li>Signup for a Gravatar account <MudLink Href="https://gravatar.com/connect/"> here </MudLink> with the email above.</li>
+                            <li>Verify your account by clicking the link emailed to you</li>
+                            <li>Upload a picture following the instructions</li>
+                            <li> Log out and login to Lighthouse Notes</li>
+                            <li>Press the "Sync Profile Picture" button at the bottom of this page</li>
+                        </ol>
+                    </MudText>
+                </MudCardContent>
+
+                <MudCardActions >
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="SyncProfilePicture"> Sync Profile Picture </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+</PageLoad>

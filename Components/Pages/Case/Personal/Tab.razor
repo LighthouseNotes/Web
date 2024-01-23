@@ -1,0 +1,47 @@
+﻿@page "/case/{caseId}/tab/{TabId}"
+@inherits TabBase
+@attribute [Authorize(Roles = "user")]
+
+<PageLoad @ref="@PageLoad">
+    <PageTitle> @SCase.DisplayName - @Tab.Name </PageTitle>
+    <MudText Typo="Typo.h1" Align="Align.Center"> @Tab.Name </MudText>
+    <MudText Typo="Typo.subtitle1" Align="Align.Center"> Created: @Tab.Created.ToString(Settings.DateTimeFormat) </MudText>
+    <MudStack>
+
+
+        @* Toggle mentions button and save button *@
+        <div class="mx-3 d-flex justify-end flex-grow-1 gap-4">
+            <MudToolBar>
+                <MudButton OnClick="@OpenRichTextEditor" StartIcon="@Icons.Material.Filled.EditNote" Color="Color.Primary" Variant="Variant.Filled" Class="my-3"> Edit Content </MudButton>
+            </MudToolBar>
+        </div>
+
+        <div class="mx-3">
+            @if (TabContent.Item1 == null && TabContent.Item2 == null)
+            {
+                <div Class="d-flex justify-center">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium"/>
+                </div>
+            }
+            else if (TabContent is { Item1: false, Item2: null })
+            {
+                <MudStack>
+                    <div Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Style="font-size: 4rem;"/>
+                    </div>
+                    <div Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
+                        <MudText Align="Align.Center" Typo="Typo.h3">The tab does not have any content to display! </MudText>
+                    </div>
+                    <div Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
+                        <MudText Align="Align.Center" Typo="Typo.caption"> Please use the 'Edit Content' button above to add content. </MudText>
+                    </div>
+                </MudStack>
+            }
+            else if (TabContent is { Item1: true, Item2: not null })
+            {
+                @((MarkupString)TabContent.Item2.OuterHtml)
+            }
+        </div>
+    </MudStack>
+
+</PageLoad>

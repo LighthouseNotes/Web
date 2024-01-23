@@ -1,0 +1,108 @@
+﻿@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Error = Web.Components.Pages.Error
+@using System.Net
+@inject TokenProvider TokenProvider
+@inject NavigationManager NavigationManager
+@inject ProtectedLocalStorage ProtectedLocalStore
+@inject LighthouseNotesAPIGet LighthouseNotesAPIGet 
+
+<CascadingAuthenticationState>
+    <ErrorBoundary>
+        <ChildContent>
+            <Router AppAssembly="@typeof(App).Assembly">
+                @* Page found *@
+                <Found Context="routeData">
+                    <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                        <Authorizing>
+                            <MudText> Determining session state, please wait... </MudText>
+                        </Authorizing>
+                        <NotAuthorized>
+                            @* If user is not authenticated redirect to login *@
+                            @if (context.User.Identity!.IsAuthenticated == false)
+                            {
+                                <ReditectToLogin/>
+                            }
+                            @* Else the user is trying to access a page they do not have access to *@
+                            else
+                            {
+                                <LayoutView Layout="@typeof(ErrorLayout)">
+                                    <Error StatusCode="HttpStatusCode.Forbidden"></Error>
+                                </LayoutView>
+                            }
+                        </NotAuthorized>
+                    </AuthorizeRouteView>
+                </Found>
+                @* Not found *@
+                <NotFound >
+                    <LayoutView Layout="@typeof(ErrorLayout)">
+                        <Error StatusCode="HttpStatusCode.NotFound"></Error>
+                    </LayoutView>
+                </NotFound>
+            </Router>
+        </ChildContent>
+        @* Error handling  *@
+        <ErrorContent Context="ex">
+            <LayoutView Layout="@typeof(ErrorLayout)">
+                <Error StatusCode="HttpStatusCode.InternalServerError" Exception="ex"></Error>
+            </LayoutView>
+        </ErrorContent>
+    </ErrorBoundary>
+</CascadingAuthenticationState>
+
+
+@code {
+
+    [Parameter] public InitialApplicationState? InitialState { get; set; }
+
+    private string _currentUrl = "/";
+
+    // Page initialized
+    protected override void OnInitialized()
+    {
+        // Set token provider based on initial state
+        TokenProvider.AccessToken = InitialState?.AccessToken;
+        TokenProvider.RefreshToken = InitialState?.RefreshToken;
+        TokenProvider.XsrfToken = InitialState?.XsrfToken;
+
+        // Get current url as an escaped string
+        _currentUrl = Uri.EscapeDataString(new Uri(NavigationManager.Uri)
+            .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped));
+    }
+
+    // After page render
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Get user settings from browser storage
+            ProtectedBrowserStorageResult<Settings> result = await ProtectedLocalStore.GetAsync<Settings>("settings");
+
+            // If result is not a success then user settings were not found in browser storage
+            if (!result.Success)
+            {
+                // Call the api to get user's settings
+                API.Settings settings = await LighthouseNotesAPIGet.UserSettings();
+
+                // Set user settings in browser storage
+                await ProtectedLocalStore.SetAsync("settings", new Settings
+                {
+                    UserId = settings.UserId,
+                    TimeZone = settings.TimeZone,
+                    DateFormat = settings.DateFormat,
+                    TimeFormat = settings.TimeFormat,
+                    DateTimeFormat = settings.DateFormat + " " + settings.TimeFormat,
+                    S3Endpoint = settings.S3Endpoint
+                });
+
+                // Create an escaped string for the culture
+                string cultureEscaped = Uri.EscapeDataString(settings.Locale);
+
+                // Use the culture controller to set the culture cookie and redirect back to the current page
+                NavigationManager.NavigateTo(
+                    $"Culture/Set?culture={cultureEscaped}&redirectUrl={_currentUrl}",
+                    true);
+            }
+        }
+    }
+
+}

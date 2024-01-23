@@ -1,0 +1,114 @@
+﻿@using Theme = Web.Components.Layout.Theme
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<MudThemeProvider Theme="_lighthouseNotesTheme" @ref="@_mudThemeProvider" @bind-IsDarkMode="@_darkMode"/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => DrawerToggle())"/>
+        <MudImage Src="img/logo.png" Alt="Lighthouse Notes Logo" Class="rounded-lg" Height="60" Style="padding-right: 12px;"/>
+        <MudDivider Vertical="true"/>
+        <MudIconButton Icon="@Icons.Material.Filled.Home" Color="Color.Inherit" OnClick="@HomeClick"/>
+        <MudSpacer/>
+        <MudIconButton Icon="@Icons.Material.Filled.QuestionMark" Color="Color.Inherit" Edge="Edge.End"/>
+        <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight">
+            <MudMenuItem Icon="@Icons.Material.Filled.Map" Href="account/localization"> Localization </MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Filled.ManageAccounts" Href="account/profile"> Profile </MudMenuItem>
+            <AuthorizeView>
+                <Authorized>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Edge="Edge.End" Href="account/logout" ForceLoad="true"> Logout </MudMenuItem>
+                </Authorized>
+                <NotAuthorized>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Edge="Edge.End" Href="@_loginUrl" ForceLoad="true"> Login </MudMenuItem>
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudMenu>
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <NavMenu @bind-ContainsItems="_navMenuContainsItems"/>
+    </MudDrawer>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _navMenuContainsItems;
+    private bool _drawerOpen;
+    private bool _darkMode;
+    private MudThemeProvider _mudThemeProvider = null!;
+    private readonly MudTheme _lighthouseNotesTheme = Theme.LighthouseNotesTheme;
+    private string _loginUrl = "/account/login?returnUrl=/";
+    private string _currentUrl = "/";
+
+    protected override void OnInitialized()
+    {
+        // Get current url as an escaped string
+        _currentUrl = Uri.EscapeDataString(new Uri(NavigationManager.Uri)
+            .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped));
+
+        // Create login url with redirect ulr to the current page
+        _loginUrl = $"/account/login?returnUrl={_currentUrl}";
+    }
+
+    // Drawer toggle - toggle open / close drawer on button press
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    // On system preference change - enable or disable dark mode based on preference
+    private async Task OnSystemPreferenceChanged(bool newValue)
+    {
+        // Set dark mode variable to new system preference
+        _darkMode = newValue;
+
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Home click - navigate to / on button click
+    private void HomeClick()
+    {
+        NavigationManager.NavigateTo("");
+    }
+
+    // After page render
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // If this is the first render
+        if (firstRender)
+        {
+            // If navigation menu contains items, open it.
+            if (_navMenuContainsItems)
+            {
+                _drawerOpen = true;
+            }
+
+            // Set dark mode to true / false based on system preference
+            _darkMode = await _mudThemeProvider.GetSystemPreference();
+
+            // Watch system preference for changes
+            await _mudThemeProvider.WatchSystemPreference(OnSystemPreferenceChanged);
+
+            // If dark mode is enabled use material-dark for Syncfusion elements 
+            if (_darkMode)
+            {
+                await JSRuntime.InvokeVoidAsync("setTheme", "material-dark");
+            }
+            // Else dark mode is disabled so use material for Syncfusion elements 
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("setTheme", "material");
+            }
+
+            // Re-render component
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+}

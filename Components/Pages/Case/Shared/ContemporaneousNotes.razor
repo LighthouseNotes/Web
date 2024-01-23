@@ -1,0 +1,159 @@
+﻿@using Syncfusion.Blazor.DropDowns
+@page "/case/{caseId}/shared/contemporaneous-notes"
+@inherits SharedContemporaneousNotesBase
+@attribute [Authorize(Roles = "user")]
+
+<PageLoad @ref="@PageLoad">
+    <PageTitle> @SCase.DisplayName - (Shared) Contemporaneous Notes </PageTitle>
+
+    @* Navigation Lock and Title *@
+    <NavigationLock OnBeforeInternalNavigation="BeforeInternalNavigation"/>
+    <MudText Typo="Typo.h1" Align="Align.Center"> Contemporaneous Notes </MudText>
+
+    <MudStack>
+
+        @* Display editor on larger screen *@
+        <MudHidden Breakpoint="Breakpoint.SmAndDown">
+
+            @* Add note container *@
+            <div Class="ma-3">
+
+                <MudText Typo="Typo.h2"> Add Note </MudText>
+                <MudText Typo="Typo.subtitle1"> Use the rich text editor below to create a shared note and then click or tap 'Save'.</MudText>
+
+                @* Rich text editor *@
+                <SfRichTextEditor ID="RTE" @bind-Value="@RteValue">
+                    <RichTextEditorEvents BeforeUploadImage="BeforeImageUpload" OnImageUploadFailed="@OnImageUploadFailedHandler" OnImageUploadSuccess="@OnImageUploadSuccessHandler"></RichTextEditorEvents>
+                    <RichTextEditorImageSettings SaveUrl="@ImageSaveUrl" Path="@ImagePath"/>
+                </SfRichTextEditor>
+
+                @* Rich text editor Mention *@
+                <div>
+                    @if (ToggleUserMention == "Exhibit mention")
+                    {
+                        <SfMention TItem="API.Exhibit" Target="#RTE_rte-editable" DataSource="@Exhibits" SuggestionCount=8 AllowSpaces="true" PopupHeight="200px" PopupWidth="250px" Context="Exhibit">
+                            <ItemTemplate>
+                                <MudText Typo="Typo.body1">@Exhibit.Reference</MudText>
+                            </ItemTemplate>
+                            <DisplayTemplate>
+                                <a class="mention-link" href="@($"/case/{CaseId}/exhibit/{Exhibit.Id}")"> @@@(Exhibit.Reference)</a>
+                            </DisplayTemplate>
+                            <ChildContent>
+                                <MentionFieldSettings Text="Reference"></MentionFieldSettings>
+                            </ChildContent>
+                        </SfMention>
+                    }
+                    else
+                    {
+                        <SfMention TItem="API.User" Target="#RTE_rte-editable" DataSource="@CaseUsers" SuggestionCount=8 AllowSpaces="true" PopupHeight="200px" PopupWidth="250px" Context="User">
+                            <ItemTemplate>
+                                <MudStack Row="true">
+                                    <MudAvatar Image="@User.ProfilePicture" Size="Size.Medium" Square="true"/>
+                                    <MudStack Justify="Justify.Center" Spacing="0">
+                                        <MudText Typo="Typo.body1">@User.DisplayName</MudText>
+                                        <MudText Typo="Typo.body2">@User.JobTitle</MudText>
+                                    </MudStack>
+                                </MudStack>
+                            </ItemTemplate>
+                            <DisplayTemplate>
+                                <a class="mention-link" href="@($"/user/{User.Id}")"> @@@(User.DisplayName) </a>
+                            </DisplayTemplate>
+                            <ChildContent>
+                                <MentionFieldSettings Text="DisplayName"></MentionFieldSettings>
+                            </ChildContent>
+                        </SfMention>
+                    }
+                </div>
+            </div>
+
+            @* Toggle mentions button and save button *@
+            <div class="mx-3 d-flex justify-end flex-grow-1 gap-4">
+                <MudToolBar>
+                    <MudSwitch @bind-Checked="ToggleUserMention" Converter="@(new ToggleUserMentionConverter())" Color="Color.Success"> @ToggleUserMention </MudSwitch>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Primary" OnClick="@SaveContent">Save</MudButton>
+                </MudToolBar>
+            </div>
+
+        </MudHidden>
+
+        @* Hide editor on larger screen and replace with button to open editor *@
+        <MudHidden Breakpoint="Breakpoint.MdAndUp">
+            <div class="ma-3">
+                <MudText Typo="Typo.h2"> Add Note </MudText>
+                <MudButton @onclick="OpenRichTextEditor" StartIcon="@Icons.Material.Filled.EditNote" Color="Color.Primary" Variant="Variant.Filled" Class="my-3"> Add note </MudButton>
+            </div>
+        </MudHidden>
+
+        @* Notes toolbar *@
+        <div class="mx-3">
+            <MudText Typo="Typo.h2"> Notes </MudText>
+            <MudText Typo="Typo.subtitle1"> All the shared contemporaneous notes added to this case are displayed below.</MudText>
+
+            @* If there are no notes to display then don't display the toolbar *@
+            @if (HasContemporaneousNotes == true && ContemporaneousNotes != null)
+            {
+                <MudPaper Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
+                    <MudToolBar>
+                        <MudSwitch @bind-Checked="ToggleCollapsed" Converter="@(new ToggleCollapseConverter())" Color="Color.Success"> @ToggleCollapsed </MudSwitch>
+                        <MudDateRangePicker PickerVariant="PickerVariant.Dialog" Label="Filter by date" DateRange="FilterDateRange" Clearable="true" DisplayMonths="1" DateRangeChanged="OnTimeRangeChange" Style="max-width: 400px; margin: 19px 0"/>
+                    </MudToolBar>
+                </MudPaper>
+            }
+        </div>
+
+        @* Notes *@
+        <div Class="mx-3">
+
+            @* Both items are null so display loading indicator *@
+            @if (HasContemporaneousNotes == null && ContemporaneousNotes == null)
+            {
+                <div Class="d-flex justify-center">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium"/>
+                </div>
+            }
+            @* Item 1 is false and Item 2 is null which means there are no notes *@
+            else if (HasContemporaneousNotes == false && ContemporaneousNotes == null)
+            {
+                <MudStack>
+                    <div Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Style="font-size: 4rem;"/>
+                    </div>
+                    <div Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
+                        <MudText Align="Align.Center" Typo="Typo.h3">You do not have any notes to display! </MudText>
+                    </div>
+                    <div Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
+                        <MudText Align="Align.Center" Typo="Typo.caption"> Please use the RichText editor above to create a note </MudText>
+                    </div>
+                </MudStack>
+            }
+            @* Item 1 is true and Item 2 is not null so display notes *@
+            else if (HasContemporaneousNotes == true && ContemporaneousNotes != null)
+            {
+                <MudExpansionPanels MultiExpansion="true" @ref="ContemporaneousNotesCollapse">
+                    @foreach (SharedContemporaneousNote contemporaneousNote in ContemporaneousNotes)
+                    {
+                        <MudExpansionPanel>
+
+                            <TitleContent>
+                                <div class="d-flex">
+                                    <MudTooltip Text="@contemporaneousNote.Creator.DisplayName">
+                                        <MudLink @onclick="() => UserClick(contemporaneousNote.Creator.Id)">
+                                            <MudAvatar Square="true">
+                                                <MudImage Src="@contemporaneousNote.Creator.ProfilePicture"/>
+                                            </MudAvatar>
+                                        </MudLink>
+                                    </MudTooltip>
+                                    <MudText Typo="Typo.h6">@(TimeZoneInfo.ConvertTimeFromUtc(contemporaneousNote.Created, TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone)).ToString(Settings.DateTimeFormat))</MudText>
+                                </div>
+                            </TitleContent>
+                            <ChildContent>
+                                @((MarkupString)contemporaneousNote.Content)
+                            </ChildContent>
+                        </MudExpansionPanel>
+                    }
+                </MudExpansionPanels>
+            }
+        </div>
+
+    </MudStack>
+</PageLoad>

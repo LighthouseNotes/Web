@@ -1,0 +1,109 @@
+﻿@page "/"
+@using System.Globalization
+@inherits HomeBase
+@attribute [Authorize(Roles = "user")]
+
+<PageTitle> Home </PageTitle>
+
+<PageLoad @ref="PageLoad">
+    <MudText Typo="Typo.h1"> Welcome to Lighthouse Notes </MudText>
+
+    @* User details *@
+    <MudGrid class="my-3">
+        <MudItem xs="12" sm="6" md="5" xxl="5">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Square="true">
+                            <MudImage Height="45" Src="@User.ProfilePicture" ObjectFit="ObjectFit.ScaleDown"></MudImage>
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6"> @User.DisplayName </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>
+                        <b> Given Name & Last Name: </b> @User.GivenName @User.LastName
+                    </MudText>
+                    <MudText>
+                        <b> Email Address: </b> @User.EmailAddress
+                    </MudText>
+                    <MudText>
+                        <b> Organization: </b> @User.Organization.DisplayName
+                    </MudText>
+                    <MudText>
+                        <b> Job Title: </b> @User.JobTitle
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    @* Cases *@
+    <MudText Typo="Typo.h2"> Cases </MudText>
+    <MudGrid class="my-3">
+        <MudItem xs="12">
+            <MudDataGrid T="Models.API.Case" Items="@Cases" Filterable="true" EditTrigger="DataGridEditTrigger.Manual" EditMode="DataGridEditMode.Form" ReadOnly="false" QuickFilter="@QuickFilter" CommittedItemChanges="@CommittedItemChanges">
+                <ToolBarContent>
+                    <MudTextField T="string" @bind-Value="SearchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0">
+                    </MudTextField>
+                </ToolBarContent>
+                <Columns>
+                    <PropertyColumn Property="x => x.DisplayId" Title="ID">
+                        <EditTemplate>
+                            <MudTextField T="string" @bind-Value="context.Item.DisplayId" MaxLength="10" Required="true" Label="ID" Clearable="true" Variant="Variant.Outlined" D/>
+                        </EditTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Name" Title="Name">
+                        <EditTemplate>
+                            <MudTextField T="string" @bind-Value="context.Item.Name" MaxLength="90" Required="true" Label="Name" Clearable="true" Variant="Variant.Outlined"/>
+                        </EditTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.SIO.DisplayName" Title="SIO">
+                        <EditTemplate>
+                            <MudAutocomplete T="API.User" @bind-Value="context.Item.SIO" SearchFunc="SIOUserSearchFunc" Label="SIO" ToStringFunc="c => c.DisplayName" Required="true" Clearable="true" Variant="Variant.Outlined"/>
+                        </EditTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Created" Culture="CultureInfo.CurrentCulture" Format="@Settings.DateTimeFormat"/>
+                    <PropertyColumn Property="x => x.Modified" Culture="CultureInfo.CurrentCulture" Format="@Settings.DateTimeFormat"/>
+                    <PropertyColumn Property="x => x.Status" Title="Status">
+                        <EditTemplate>
+                            <MudTextField T="string" @bind-Value="context.Item.Status" MaxLength="50" Required="true" Label="Status" Clearable="true" Variant="Variant.Outlined"/>
+                        </EditTemplate>
+                    </PropertyColumn>
+                    <TemplateColumn Title="Actions">
+                        <CellTemplate>
+                            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.FolderOpen" Color="Color.Primary" Href="@($"/case/{context.Item.Id}")"> Open </MudButton>
+                            @* If SIO ID is equal to the user ID then display the edit button  *@
+                            @if (context.Item.SIO.Id == Settings.UserId)
+                            {
+                                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Edit" Color="Color.Secondary" OnClick="@context.Actions.StartEditingItemAsync"> Edit </MudButton>
+                            }
+                            @* Else if user is an organization administrator then display the edit button *@
+                            else
+                            {
+                                <AuthorizeView Roles="organization-administrator" Context="authState">
+                                    <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Edit" Color="Color.Secondary" OnClick="@context.Actions.StartEditingItemAsync"> Edit </MudButton>
+                                </AuthorizeView>
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        </MudItem>
+    </MudGrid>
+
+    @* Access token  *@
+    @if (DevelopmentMode)
+    {
+        <div class="my-3">
+            <MudText Typo="Typo.h6"> Access Token </MudText>
+            <MudText> Use the button below to copy the JSON Web token to clipboard for development and debugging. </MudText>
+            <MudText Typo="Typo.subtitle2"> NOTE: If your seeing this in production then make sure to set the environment variable `ASPNETCORE_ENVIRONMENT` to `Production`! </MudText>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@CopyAccessTokenToClipboard" Class="my-1"> Copy Access Token to Clipboard </MudButton>
+        </div>
+    }
+
+</PageLoad>

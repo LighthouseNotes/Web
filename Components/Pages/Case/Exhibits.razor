@@ -1,0 +1,108 @@
+﻿@page "/case/{caseId}/exhibits"
+@using System.Globalization
+@inherits ExhibitsBase
+@attribute [Authorize(Roles = "user")]
+
+<PageLoad @ref="@PageLoad">
+
+    <PageTitle> @SCase.DisplayName - Exhibits </PageTitle>
+
+    <MudText Typo="Typo.h1" Align="Align.Center"> Exhibits </MudText>
+
+    @* If the user is SIO on the case show add exhibit *@
+    @if (Settings.UserId == SCase.SIO.Id)
+    {
+        <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator/>
+            <MudText Typo="Typo.h2" Align="Align.Center"> Add Exhibit </MudText>
+            <MudText Typo="Typo.subtitle1" Align="Align.Center"> Use the below form to add exhibits to the case. Complete the exhibit details and Click or tap 'Add'.</MudText>
+            <MudGrid Class="justify-center">
+                <MudItem xs="12" sm="8">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudTextField Label="Reference"
+                                          @bind-Value="Model.Reference" For="@(() => Model.Reference)"/>
+                            <MudTextField Label="Description"
+                                          @bind-Value="Model.Description" For="@(() => Model.Description)"/>
+                            <div class="d-flex">
+                                <MudDatePicker PickerVariant="PickerVariant.Dialog" Editable="true" @bind-Date="Model.DateSeizedProduced" For="@(() => Model.DateSeizedProduced)" Placeholder="Select Date"/>
+                                <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
+                                <MudTimePicker ickerVariant="PickerVariant.Dialog" Editable="true" @bind-Time="Model.TimeSeizedProduced" For="@(() => Model.TimeSeizedProduced)" Placeholder="Select Time"/>
+                                <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
+                                <MudAutocomplete T="TimeZoneInfo" Label="Timezone" @bind-Value="Model.TimeZone" For="@(() => Model.TimeZone)" SearchFunc="@TimeZoneSearch" MaxItems="20"/>
+                            </div>
+                            <MudTextField Label="Where Seized / Produced"
+                                          @bind-Value="Model.WhereSeizedProduced" For="@(() => Model.WhereSeizedProduced)"/>
+                            <MudTextField Label="Seized By"
+                                          @bind-Value="Model.SeizedBy" For="@(() => Model.SeizedBy)"/>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"> Add </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    }
+    @* Esle if the user has the role organization-administrator show add exhibit *@
+    else
+    {
+        <AuthorizeView Roles="organization-administrator" Context="authenticationStateContext">
+            <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
+                <DataAnnotationsValidator/>
+                <MudText Typo="Typo.h2" Align="Align.Center"> Add Exhibit </MudText>
+                <MudText Typo="Typo.subtitle1" Align="Align.Center"> Use the below form to add exhibits to the case. Complete the exhibit details and Click or tap 'Add'.</MudText>
+                <MudGrid Class="justify-center">
+                    <MudItem xs="12" sm="8">
+                        <MudCard>
+                            <MudCardContent>
+                                <MudTextField Label="Reference"
+                                              @bind-Value="Model.Reference" For="@(() => Model.Reference)"/>
+                                <MudTextField Label="Description"
+                                              @bind-Value="Model.Description" For="@(() => Model.Description)"/>
+                                <div class="d-flex">
+                                    <MudDatePicker PickerVariant="PickerVariant.Dialog" Editable="true" @bind-Date="Model.DateSeizedProduced" For="@(() => Model.DateSeizedProduced)" Placeholder="Select Date"/>
+                                    <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
+                                    <MudTimePicker ickerVariant="PickerVariant.Dialog" Editable="true" @bind-Time="Model.TimeSeizedProduced" For="@(() => Model.TimeSeizedProduced)" Placeholder="Select Time"/>
+                                    <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
+                                    <MudAutocomplete T="TimeZoneInfo" Label="Timezone" @bind-Value="Model.TimeZone" For="@(() => Model.TimeZone)" SearchFunc="@TimeZoneSearch" MaxItems="20"/>
+                                </div>
+                                <MudTextField Label="Where Seized / Produced"
+                                              @bind-Value="Model.WhereSeizedProduced" For="@(() => Model.WhereSeizedProduced)"/>
+                                <MudTextField Label="Seized By"
+                                              @bind-Value="Model.SeizedBy" For="@(() => Model.SeizedBy)"/>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"> Add </MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </EditForm>
+        </AuthorizeView>
+    }
+
+
+    @* Exhibits table *@
+    <MudText Typo="Typo.h2" Align="Align.Center" Class="ma-3"> Exhibits </MudText>
+    <MudText Typo="Typo.subtitle1" Align="Align.Center"> The table below details all exhibits added to the case. </MudText>
+    <MudGrid>
+        <MudItem xs="12">
+            <MudDataGrid T="Models.API.Exhibit" Items="@Exhibits" Filterable="true">
+                <Columns>
+                    <PropertyColumn Property="x => x.Reference"/>
+                    <PropertyColumn Property="x => x.Description"/>
+                    <PropertyColumn Property="x => x.DateTimeSeizedProduced" Culture="CultureInfo.CurrentCulture" Format="@Settings.DateTimeFormat" Title="Date & Time Seized / Produced"/>
+                    <PropertyColumn Property="x => x.WhereSeizedProduced" Title="Where Seized / Produced"/>
+                    <PropertyColumn Property="x => x.SeizedBy" Title="Seized By"/>
+                    <TemplateColumn Title="Actions">
+                        <CellTemplate>
+                            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Search" Color="Color.Primary" Href="@($"/case/{CaseId}/exhibit/{context.Item.Id}")"> More Details </MudButton>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        </MudItem>
+    </MudGrid>
+
+</PageLoad>
