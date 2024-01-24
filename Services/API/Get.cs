@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Net;
+using System.Text.Json;
 using Web.Models.API;
 
 namespace Web.Services.API;
@@ -110,9 +111,15 @@ public class LighthouseNotesAPIGet
         // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
 
-        // If response is not a success status code return null
-        if (!response.IsSuccessStatusCode)
+        // If response is 404
+        if (response.StatusCode == HttpStatusCode.NotFound)
             return null;
+        
+        // If response is not a success status code, throw exception
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+        }
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
