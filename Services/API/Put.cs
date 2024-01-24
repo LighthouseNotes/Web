@@ -69,12 +69,12 @@ public class LighthouseNotesAPIPut
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
 
-    // PUT: /organization/config
-    public async Task Config(OrganizationSettings content)
+    // PUT: /organization/settings
+    public async Task Settings(OrganizationSettings content)
     {
         // Create request
         HttpRequestMessage request = new(HttpMethod.Put,
-            "organization/config");
+            "organization/settings");
 
         // Add Bearer token
         string? token = _tokenProvider.AccessToken;

@@ -53,7 +53,7 @@ public class ConfigBase : ComponentBase
     protected async Task OnValidSubmit(EditContext context)
     {
         // Call API to save changes if value is changed
-        await LighthouseNotesAPIPut.Config(new API.OrganizationSettings
+        await LighthouseNotesAPIPut.Settings(new API.OrganizationSettings
         {
             S3Endpoint = Model.S3Endpoint != _organizationSettings.S3Endpoint ? Model.S3Endpoint : null,
             S3BucketName = Model.S3BucketName != _organizationSettings.S3BucketName ? Model.S3BucketName : null,
