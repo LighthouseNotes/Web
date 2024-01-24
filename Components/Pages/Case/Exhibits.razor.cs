@@ -19,7 +19,7 @@ public class ExhibitsBase : ComponentBase
     protected PageLoad? PageLoad;
     protected API.Case SCase = null!;
     protected List<API.Exhibit>? Exhibits;
-    protected readonly AddExhibit Model = new();
+    protected AddExhibit Model = new();
     protected Settings Settings = new();
 
     // Class variables
@@ -32,7 +32,7 @@ public class ExhibitsBase : ComponentBase
 
         [Required] public string Description { get; set; } = null!;
 
-        [Required] public DateTime? DateSeizedProduced { get; set; }
+        [Required] public DateTime? DateSeizedProduced { get; set; } 
 
         [Required] public TimeSpan? TimeSeizedProduced { get; set; }
 
@@ -107,6 +107,9 @@ public class ExhibitsBase : ComponentBase
         else
             Exhibits.Add(newExhibit);
 
+        // Clear the form fields
+        Model = new AddExhibit();
+        
         // Re-render component
         await InvokeAsync(StateHasChanged);
 

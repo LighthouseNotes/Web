@@ -20,7 +20,7 @@ public class CaseBase : ComponentBase
     protected API.Case SCase = null!;
     protected Settings Settings = new();
     protected PageLoad? PageLoad;
-    protected readonly AddCaseUserForm Model = new();
+    protected AddCaseUserForm Model = new();
 
     // Class variables
     private List<API.User> _users = null!;
@@ -94,6 +94,9 @@ public class CaseBase : ComponentBase
         // Get updated case details
         SCase = await LighthouseNotesAPIGet.Case(CaseId);
 
+        // Clear the form fields
+        Model = new AddCaseUserForm();
+        
         // Re-render component
         await InvokeAsync(StateHasChanged);
     }

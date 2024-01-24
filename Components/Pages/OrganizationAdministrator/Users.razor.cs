@@ -26,7 +26,7 @@ public class UsersBase : ComponentBase
     protected string RoleSelectValue = "Nothing selected";
     protected List<API.User> Users = null!;
     protected string? SearchString;
-    protected readonly InviteUserForm Model = new();
+    protected InviteUserForm Model = new();
     
     private Models.Settings _settings = new();
 
@@ -239,5 +239,11 @@ public class UsersBase : ComponentBase
 
         // Notify the user 
         Snackbar.Add("User has successfully been invited!", Severity.Success);
+        
+        // Clear the form fields
+        Model = new InviteUserForm();
+
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
     }
 }
