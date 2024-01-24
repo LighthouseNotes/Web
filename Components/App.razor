@@ -81,26 +81,31 @@
             if (!result.Success)
             {
                 // Call the api to get user's settings
-                API.Settings settings = await LighthouseNotesAPIGet.UserSettings();
+                API.Settings? settings = await LighthouseNotesAPIGet.UserSettings();
 
-                // Set user settings in browser storage
-                await ProtectedLocalStore.SetAsync("settings", new Settings
+                // If settings is not null then set user's settings
+                if (settings != null)
                 {
-                    UserId = settings.UserId,
-                    TimeZone = settings.TimeZone,
-                    DateFormat = settings.DateFormat,
-                    TimeFormat = settings.TimeFormat,
-                    DateTimeFormat = settings.DateFormat + " " + settings.TimeFormat,
-                    S3Endpoint = settings.S3Endpoint
-                });
+                    // Set user settings in browser storage
+                    await ProtectedLocalStore.SetAsync("settings", new Settings
+                    {
+                        UserId = settings.UserId,
+                        TimeZone = settings.TimeZone,
+                        DateFormat = settings.DateFormat,
+                        TimeFormat = settings.TimeFormat,
+                        DateTimeFormat = settings.DateFormat + " " + settings.TimeFormat,
+                        S3Endpoint = settings.S3Endpoint
+                    });
 
-                // Create an escaped string for the culture
-                string cultureEscaped = Uri.EscapeDataString(settings.Locale);
+                    // Create an escaped string for the culture
+                    string cultureEscaped = Uri.EscapeDataString(settings.Locale);
 
-                // Use the culture controller to set the culture cookie and redirect back to the current page
-                NavigationManager.NavigateTo(
-                    $"Culture/Set?culture={cultureEscaped}&redirectUrl={_currentUrl}",
-                    true);
+                    // Use the culture controller to set the culture cookie and redirect back to the current page
+                    NavigationManager.NavigateTo(
+                        $"Culture/Set?culture={cultureEscaped}&redirectUrl={_currentUrl}",
+                        true);
+                }
+             
             }
         }
     }

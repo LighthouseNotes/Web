@@ -98,7 +98,7 @@ public class LighthouseNotesAPIGet
     }
 
     // GET: /user/?/settings
-    public async Task<Settings> UserSettings()
+    public async Task<Settings?> UserSettings()
     {
         // Create request
         HttpRequestMessage request = new(HttpMethod.Get, "user/settings");
@@ -110,9 +110,9 @@ public class LighthouseNotesAPIGet
         // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
 
-        // If response is not a success status code, throw exception
+        // If response is not a success status code return null
         if (!response.IsSuccessStatusCode)
-            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+            return null;
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
