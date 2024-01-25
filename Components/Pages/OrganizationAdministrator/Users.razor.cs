@@ -107,12 +107,12 @@ public class UsersBase : ComponentBase
 
         // Get users current roles
         IPagedList<Role>? userRoles =
-            await AuthOManagementClient.Organizations.GetAllMemberRolesAsync(organizationId, item.Id,
+            await AuthOManagementClient.Organizations.GetAllMemberRolesAsync(organizationId, item.Auth0Id,
                 new PaginationInfo());
         List<string> userCurrentRoles = userRoles.Select(x => x.Id).ToList();
 
         // Remove users current roles
-        await AuthOManagementClient.Organizations.DeleteMemberRolesAsync(organizationId, item.Id,
+        await AuthOManagementClient.Organizations.DeleteMemberRolesAsync(organizationId, item.Auth0Id,
             new OrganizationDeleteMemberRolesRequest
             {
                 Roles = userCurrentRoles.ToArray()
@@ -131,7 +131,7 @@ public class UsersBase : ComponentBase
                     newUserRoles.Add(Configuration["Auth0:Roles:sio"] ??
                                      throw new InvalidOperationException("Auth0:Roles:sio not found in appsettings.json!"));
                     break;
-                case "organization-administrator":
+                case "organization administrator":
                     newUserRoles.Add(Configuration["Auth0:Roles:organization-administrator"] ??
                                      throw new InvalidOperationException(
                                          "Auth0:Roles:organization-administrator not found in appsettings.json!"));
@@ -139,7 +139,7 @@ public class UsersBase : ComponentBase
             }
 
         // Assign the user the new roles
-        await AuthOManagementClient.Organizations.AddMemberRolesAsync(organizationId, item.Id,
+        await AuthOManagementClient.Organizations.AddMemberRolesAsync(organizationId, item.Auth0Id,
             new OrganizationAddMemberRolesRequest
             {
                 Roles = newUserRoles.ToArray()
