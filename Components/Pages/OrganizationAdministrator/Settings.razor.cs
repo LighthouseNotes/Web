@@ -59,7 +59,7 @@ public class ConfigBase : ComponentBase
             S3BucketName = Model.S3BucketName != _organizationSettings.S3BucketName ? Model.S3BucketName : null,
             S3NetworkEncryption = Model.S3NetworkEncryption,
             S3AccessKey = Model.S3AccessKey != _organizationSettings.S3AccessKey ? Model.S3AccessKey : null,
-            S3SecretKey = Model.S3SecretKey != _organizationSettings.S3SecretKey ? Model.S3AccessKey : null
+            S3SecretKey = Model.S3SecretKey != _organizationSettings.S3SecretKey ? Model.S3SecretKey : null
         });
 
         // Notify the user
