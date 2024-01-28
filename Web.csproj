@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-	  <TargetFramework>net7.0</TargetFramework>
-	  <Nullable>enable</Nullable>
-	  <ImplicitUsings>enable</ImplicitUsings>
-      <NoWarn>CS8620</NoWarn>
-      <PublishSingleFile>true</PublishSingleFile>
-      <Version>0.1.6</Version>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>CS8620</NoWarn>
+    <PublishSingleFile>true</PublishSingleFile>
+    <Version>0.1.6</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.4.0" />
+    <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.4.1" />
     <PackageReference Include="Auth0.ManagementApi" Version="7.26.1" />
     <PackageReference Include="Auth0Net.DependencyInjection" Version="3.1.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.57" />
@@ -21,41 +21,29 @@
   </ItemGroup>
 
   <ItemGroup>
-    <_ContentIncludedByDefault Remove="Shared\Dialogs\DeleteUserConfirmation.razor" />
-    <_ContentIncludedByDefault Remove="Shared\Dialogs\Personal\AddTabDialog.razor" />
-    <_ContentIncludedByDefault Remove="Shared\Dialogs\Shared\AddSharedTabDialog.razor" />
-    <_ContentIncludedByDefault Remove="Shared\Error.razor" />
-    <_ContentIncludedByDefault Remove="Shared\MainLayout.razor" />
-    <_ContentIncludedByDefault Remove="Shared\MultiSelectAutoComplete.razor" />
-    <_ContentIncludedByDefault Remove="Shared\NavMenu.razor" />
-    <_ContentIncludedByDefault Remove="Shared\Page\Page.razor" />
-    <_ContentIncludedByDefault Remove="Shared\Page\PageLoad.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Account\Login.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Account\Logout.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Error.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\_Host.cshtml" />
-    <_ContentIncludedByDefault Remove="Pages\Account\Account.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Account\NewUser.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Audit.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Case\Case.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Case\Exhibit.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Case\Exhibits.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Case\Personal\ContemporaneousNotes.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Case\Personal\Tab.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Case\Shared\ContemporaneousNotes.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Case\Shared\Tab.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Home.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Organization Administrator\Settings.razor" />
-    <_ContentIncludedByDefault Remove="Pages\Organization Administrator\Users.razor" />
-    <_ContentIncludedByDefault Remove="Pages\SIO\CreateCase.razor" />
-    <_ContentIncludedByDefault Remove="Pages\User.razor" />
-    <_ContentIncludedByDefault Remove="Components\Pages\Case\Shared\ContemporaneousNotes.razor" />
-    <_ContentIncludedByDefault Remove="Components\Pages\Case\Shared\Tab.razor" />
-    <_ContentIncludedByDefault Remove="Components\Dialogs\Shared\AddSharedTabDialog.razor" />
-    <_ContentIncludedByDefault Remove="Components\Dialogs\Shared\SharedRichTextEditorDialog.razor" />
-    <_ContentIncludedByDefault Remove="Components\Dialogs\Shared\SharedTabRichTextEditorDialog.razor" />
+    <Using Include="System.Security.Authentication" />
+    <Using Include="System.Security.Claims" />
+    <Using Include="Microsoft.AspNetCore.Components" />
+    <Using Include="Microsoft.AspNetCore.Components.Authorization" />
+    <Using Include="Microsoft.JSInterop" />
+    <Using Include="Web.Components.Layout.Containers" />
+    <Using Include="Web.Services" />
+    <Using Include="Web.Services.API" />
+    <Using Include="Web.Models.API">
+      <Alias>API</Alias>
+    </Using>
+    <Using Include="Web.Components.Dialogs.Personal" />
+    <Using Include="Web.Components.Dialogs.Shared" />
   </ItemGroup>
 
-
-  
+  <ItemGroup>
+    <None Update="LICENSE">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+    <None Update="README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+  </ItemGroup>
 </Project>
