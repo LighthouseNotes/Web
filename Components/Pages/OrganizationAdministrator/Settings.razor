@@ -15,7 +15,7 @@
                 <MudItem xs="12" sm="7">
                     <MudCard>
                         <MudCardContent>
-                            <div class="d-flex">
+                            <div class="d-flex flex-wrap">
                                 <MudTextField T="string" Label="S3 Endpoint" @bind-Value="Model.S3Endpoint" For="@(() => Model.S3Endpoint)"/>
                                 <MudSwitch Label="S3 Network Encryption" @bind-Checked="Model.S3NetworkEncryption" For="@(() => Model.S3NetworkEncryption)" Color="Color.Success" UnCheckedColor="Color.Warning"/>
                             </div>
