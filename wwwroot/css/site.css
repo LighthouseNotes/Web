@@ -30,6 +30,11 @@ body{
 .mud-xs-table .mud-table-cell{
     flex-wrap: wrap;
 }
+
+.e-rte-image.e-imginline, .e-rte-audio.e-audio-inline, .e-rte-video.e-video-inline{
+    max-width: 100% !important;
+    height: auto;
+}
 .picture{display:flex;align-items:center;justify-content:center;width:55%;user-select:none;z-index:0}
 .picture svg{width:100%}
 .picture svg .st10,.picture svg .st11,.picture svg .st12,.picture svg .st13,.picture svg .st14,.picture svg .st15,.picture svg .st16,.picture svg .st17,.picture svg .st3,.picture svg .st6,.picture svg .st9{stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10}
