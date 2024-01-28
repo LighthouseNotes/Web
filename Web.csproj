@@ -6,6 +6,7 @@
 	  <ImplicitUsings>enable</ImplicitUsings>
       <NoWarn>CS8620</NoWarn>
       <PublishSingleFile>true</PublishSingleFile>
+      <Version>0.1.6</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,3 +1,4 @@
+using System.Reflection;
 using Auth0.AspNetCore.Authentication;
 using Auth0Net.DependencyInjection;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
@@ -5,6 +6,15 @@ using Microsoft.AspNetCore.HttpOverrides;
 using MudBlazor.Services;
 using Syncfusion.Blazor;
 using System.Security.Cryptography.X509Certificates;
+
+// Version and copyright message
+Console.ForegroundColor = ConsoleColor.Cyan; 
+Console.WriteLine("Lighthouse Notes Web");
+Console.WriteLine(Assembly.GetEntryAssembly()!.GetName().Version?.ToString(3));
+Console.WriteLine();
+Console.WriteLine("(C) Copyright 2024 Lighthouse Notes");
+Console.WriteLine();
+Console.ForegroundColor = ConsoleColor.White;
 
 // Create builder
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
