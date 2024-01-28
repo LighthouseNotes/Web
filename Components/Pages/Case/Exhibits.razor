@@ -24,7 +24,7 @@
                                           @bind-Value="Model.Reference" For="@(() => Model.Reference)"/>
                             <MudTextField Label="Description"
                                           @bind-Value="Model.Description" For="@(() => Model.Description)"/>
-                            <div class="d-flex">
+                            <div class="d-flex flex-wrap">
                                 <MudDatePicker PickerVariant="PickerVariant.Dialog" Editable="true" @bind-Date="Model.DateSeizedProduced" For="@(() => Model.DateSeizedProduced)" Placeholder="Select Date"/>
                                 <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
                                 <MudTimePicker PickerVariant="PickerVariant.Dialog" Editable="true" @bind-Time="Model.TimeSeizedProduced" For="@(() => Model.TimeSeizedProduced)" Placeholder="Select Time"/>
@@ -60,7 +60,7 @@
                                               @bind-Value="Model.Reference" For="@(() => Model.Reference)"/>
                                 <MudTextField Label="Description"
                                               @bind-Value="Model.Description" For="@(() => Model.Description)"/>
-                                <div class="d-flex">
+                                <div class="d-flex flex-wrap">
                                     <MudDatePicker PickerVariant="PickerVariant.Dialog" Editable="true" @bind-Date="Model.DateSeizedProduced" For="@(() => Model.DateSeizedProduced)" Placeholder="Select Date"/>
                                     <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
                                     <MudTimePicker PickerVariant="PickerVariant.Dialog" Editable="true" @bind-Time="Model.TimeSeizedProduced" For="@(() => Model.TimeSeizedProduced)" Placeholder="Select Time"/>
