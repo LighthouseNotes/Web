@@ -26,7 +26,7 @@ jobs:
         id: bump
         uses: vers-one/dotnet-project-version-updater@v1.3
         with:
-          file: "Server.csproj"
+          file: "Web.csproj"
           version: ${{ env.VERSION }}
 
       - run: |
