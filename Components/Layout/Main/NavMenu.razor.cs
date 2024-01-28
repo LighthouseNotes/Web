@@ -150,7 +150,7 @@ public partial class NavMenuBase : ComponentBase
     {
         Regex pattern = CaseRegex();
         NavigationManager.NavigateTo(
-            pattern.Replace(NavigationManager.Uri,
+            pattern.Replace(new Uri(NavigationManager.Uri).PathAndQuery,
                 caseIdToNavigateTo.First(), 1));
     }
 
