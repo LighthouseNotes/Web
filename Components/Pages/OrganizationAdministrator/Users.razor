@@ -52,19 +52,20 @@
                     <PropertyColumn Property="x => x.EmailAddress" Title="Email address" Hidden="true"/>
                     <TemplateColumn Title="Roles">
                         <CellTemplate>
+                            <MudChipSet>
                             @foreach (string role in context.Item.Roles)
                             {
-                                <MudChipSet>
-                                    @if (role == "sio")
-                                    {
-                                        <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToUpper(role) </MudChip>
-                                    }
-                                    else
-                                    {
-                                        <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(role) </MudChip>
-                                    }
-                                </MudChipSet>
+                                @if (role == "sio")
+                                {
+                                    <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToUpper(role) </MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(role) </MudChip>
+                                }
+                                
                             }
+                            </MudChipSet >
                         </CellTemplate>
                         <EditTemplate>
                             <MudSelect T="string" Label="Roles" MultiSelection="true" @bind-SelectedValues="context.Item.Roles" @bind-Value="RoleSelectValue" Dense="true" Variant="Variant.Outlined" Required="true">
@@ -75,9 +76,11 @@
                     </TemplateColumn>
                     <TemplateColumn Title="Actions">
                         <CellTemplate>
-                            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.PersonSearch" Color="Color.Primary" Href="@($"/user/{context.Item.Id}")"> More Details </MudButton>
-                            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Edit" Color="Color.Secondary" OnClick="@context.Actions.StartEditingItemAsync"> Edit </MudButton>
-                            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Delete" Color="Color.Warning" OnClick="() => DeleteClick(context.Item.Id, context.Item.DisplayName)"> Delete </MudButton>
+                            <div class="d-flex gap-2 flex-wrap ">
+                                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.PersonSearch" Color="Color.Primary" Href="@($"/user/{context.Item.Id}")"> More Details </MudButton>
+                                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Edit" Color="Color.Secondary" OnClick="@context.Actions.StartEditingItemAsync"> Edit </MudButton>
+                                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Delete" Color="Color.Warning" OnClick="() => DeleteClick(context.Item.Id, context.Item.DisplayName)"> Delete </MudButton>
+                            </div>
                         </CellTemplate>
                     </TemplateColumn>
                 </Columns>
