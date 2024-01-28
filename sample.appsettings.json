@@ -1,0 +1,32 @@
+{
+  "AllowedHosts": "*",
+  "Auth0": {
+    "Domain": "example.auth0.com",
+    "Auth": {
+      "Audience": "https://api.example.com",
+      "ClientId": "",
+      "ClientSecret": ""
+    },
+    "Management" : {
+      "Audience": "https://api.example.com",
+      "ClientId": "",
+      "ClientSecret": ""
+    },
+    "Roles": {
+      "user": "rol_?",
+      "sio": "rol_?",
+      "organization-administrator": "rol_?"
+    },
+    "ConnectionId": "con_?"
+  },
+  "Syncfusion": {
+    "LicenseKey": "License"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "LighthouseNotesApiUrl": "https://api.example.com"
+}
