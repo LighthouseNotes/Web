@@ -32,7 +32,8 @@ public partial class NavMenuBase : ComponentBase
         "",
         "sio/create-case",
         "organization-administrator/users",
-        "organization-administrator/config"
+        "organization-administrator/config",
+        "audit"
     };
 
 
