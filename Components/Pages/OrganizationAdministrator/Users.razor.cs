@@ -168,6 +168,9 @@ public class UsersBase : ComponentBase
         {
             // Delete the user
             await LighthouseNotesAPIDelete.User(userId);
+            
+            // Notify the user
+            Snackbar.Add("User deleted!", Severity.Success);
 
             // Remove deleted user from users list
             Users.RemoveAll(u => u.Id == userId);
@@ -175,9 +178,6 @@ public class UsersBase : ComponentBase
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
-
-        // Notify the user
-        Snackbar.Add("User deleted!", Severity.Success);
     }
 
     // On user invite form valid submission
