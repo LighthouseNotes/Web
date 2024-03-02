@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Text.Json;
 
 namespace Web.Components.Pages;
 
@@ -30,7 +31,16 @@ public class ErrorBase : ComponentBase
             {
                 Title = exceptionDetails.Response.ReasonPhrase;
                 string responseContent = await exceptionDetails.Response.Content.ReadAsStringAsync();
-                Description = System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+                try
+                {
+                    Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent)!;
+                    Description = errorMessage?.Detail ?? System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+                }
+                catch
+                {
+                    Description =  System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+                }
+                
                 break;
             }
             case HttpRequestException httpRequestException:
