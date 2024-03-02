@@ -216,13 +216,30 @@ public class LighthouseNotesAPIGet
         // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
 
-        // If response is not a success status code, throw exception
+        // If response is anything other than a 500 internal server error throw an exception
         if (!response.IsSuccessStatusCode)
-            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+        {
+            if (response.StatusCode != HttpStatusCode.InternalServerError)
+            {
+                throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+            }
+        }
 
-        // Read response and return
+        // Read response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return responseContent;
+
+        // If response is not a a 500 internal server error return the content
+        if (response.StatusCode != HttpStatusCode.InternalServerError) 
+            return responseContent;
+        
+        // Parse response
+        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ?? throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        
+        // If error message is one about hashes display it
+        if(errorMessage.Title == "Could not find hash value for contemporaneous note!" || errorMessage.Title == "MD5 hash verification failed!" || errorMessage.Title == "SHA256 hash verification failed!")
+                return $"<span style=color:red> {errorMessage.Detail!} </span>";
+            
+        throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
 
     //////////////////////////////////
@@ -265,13 +282,30 @@ public class LighthouseNotesAPIGet
         // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
 
-        // If response is not a success status code, throw exception
+        // If response is anything other than a 500 internal server error throw an exception
         if (!response.IsSuccessStatusCode)
-            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+        {
+            if (response.StatusCode != HttpStatusCode.InternalServerError)
+            {
+                throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+            }
+        }
 
-        // Read response and return
+        // Read response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return responseContent;
+
+        // If response is not a a 500 internal server error return the content
+        if (response.StatusCode != HttpStatusCode.InternalServerError) 
+            return responseContent;
+        
+        // Parse response
+        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ?? throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        
+        // If error message is one about hashes display it
+        if(errorMessage.Title == "Could not find hash value for shared contemporaneous note!" || errorMessage.Title == "MD5 hash verification failed!" || errorMessage.Title == "SHA256 hash verification failed!")
+            return $"<span style=color:red> {errorMessage.Detail!} </span>";
+            
+        throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
 
 
@@ -337,12 +371,33 @@ public class LighthouseNotesAPIGet
         string? token = _tokenProvider.AccessToken;
         request.Headers.Add("Authorization", $"Bearer {token}");
 
-        // Send request and read response
+        // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
+        
+        // If response is anything other than a 500 internal server error throw an exception
+        if (!response.IsSuccessStatusCode)
+        {
+            if (response.StatusCode != HttpStatusCode.InternalServerError)
+            {
+                throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+            }
+        }
+
+        // Read response
         string responseContent = await response.Content.ReadAsStringAsync();
 
-        // If response is successful return (true, response) else return (false, response)
-        return response.IsSuccessStatusCode ? (true, responseContent) : (false, responseContent);
+        // If response is not a a 500 internal server error return the content
+        if (response.StatusCode != HttpStatusCode.InternalServerError) 
+            return  (true, responseContent);
+        
+        // Parse response
+        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ?? throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        
+        // If error message is one about hashes display it
+        if (errorMessage.Title == "Can not find the S3 object for the tab!")
+            return (false, responseContent);
+            
+        throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
 
     /////////////////
@@ -360,8 +415,9 @@ public class LighthouseNotesAPIGet
         string? token = _tokenProvider.AccessToken;
         request.Headers.Add("Authorization", $"Bearer {token}");
 
-        // Send request and ensure response
+        // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
+        
         // If response is not a success status code, throw exception
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
@@ -405,12 +461,33 @@ public class LighthouseNotesAPIGet
         string? token = _tokenProvider.AccessToken;
         request.Headers.Add("Authorization", $"Bearer {token}");
 
-        // Send request and read response
+        // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
+        
+        // If response is anything other than a 500 internal server error throw an exception
+        if (!response.IsSuccessStatusCode)
+        {
+            if (response.StatusCode != HttpStatusCode.InternalServerError)
+            {
+                throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+            }
+        }
+
+        // Read response
         string responseContent = await response.Content.ReadAsStringAsync();
 
-        // If response is successful return (true, response) else return (false, response)
-        return response.IsSuccessStatusCode ? (true, responseContent) : (false, responseContent);
+        // If response is not a a 500 internal server error return the content
+        if (response.StatusCode != HttpStatusCode.InternalServerError) 
+            return  (true, responseContent);
+        
+        // Parse response
+        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ?? throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        
+        // If error message is one about hashes display it
+        if (errorMessage.Title == "Can not find the S3 object for the tab!")
+            return (false, responseContent);
+            
+        throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
     ///////////
     // Image //
@@ -429,13 +506,30 @@ public class LighthouseNotesAPIGet
         // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
 
-        // If response is not a success status code, throw exception
+        // If response is anything other than a 500 internal server error throw an exception
         if (!response.IsSuccessStatusCode)
-            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+        {
+            if (response.StatusCode != HttpStatusCode.InternalServerError)
+            {
+                throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+            }
+        }
 
-        // Read response and return unescaped string
+        // Read response 
         string responseContent = await response.Content.ReadAsStringAsync();
-        return System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+        
+        // If response is not a a 500 internal server error return the content
+        if (response.StatusCode != HttpStatusCode.InternalServerError) 
+            return System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+        
+        // Parse response
+        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ?? throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        
+        // If error message is one about hashes display it
+        if(errorMessage.Title == "Could not find hash value for the image!" || errorMessage.Title == "MD5 hash verification failed!" || errorMessage.Title == "SHA256 hash verification failed!")
+            return $"/img/logo.png";
+       
+        throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
 
     // GET: /case/?/shared/?/image
@@ -451,13 +545,30 @@ public class LighthouseNotesAPIGet
         // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
 
-        // If response is not a success status code, throw exception
+        // If response is anything other than a 500 internal server error throw an exception
         if (!response.IsSuccessStatusCode)
-            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+        {
+            if (response.StatusCode != HttpStatusCode.InternalServerError)
+            {
+                throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+            }
+        }
 
-        // Read response and return unescaped string
+        // Read response 
         string responseContent = await response.Content.ReadAsStringAsync();
-        return System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+        
+        // If response is not a a 500 internal server error return the content
+        if (response.StatusCode != HttpStatusCode.InternalServerError) 
+            return System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+        
+        // Parse response
+        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ?? throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        
+        // If error message is one about hashes display it
+        if(errorMessage.Title == "Could not find hash value for the image!" || errorMessage.Title == "MD5 hash verification failed!" || errorMessage.Title == "SHA256 hash verification failed!")
+            return $"/img/logo.png";
+       
+        throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
 
     //////////////
