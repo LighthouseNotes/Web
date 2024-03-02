@@ -94,29 +94,11 @@ public partial class TabBase : ComponentBase
     {
         (bool, string) tabContent = await LighthouseNotesAPIGet.TabContent(CaseId, TabId);
 
-        // If false then an error occured
+        // If false then tab does not contain any content
         if (tabContent.Item1 != true)
         {
-            try
-            {
-                // Try and deserialize error message
-                Models.Error? errorMessage = JsonSerializer.Deserialize<Models.Error>(tabContent.Item2);
-                if (errorMessage?.Detail == null) return;
-
-                // If error message has occured then handle it
-                Regex re = MyRegex();
-                if (re.IsMatch(errorMessage.Detail))
-                {
-                    TabContent.Item1 = false;
-                    TabContent.Item2 = null;
-                    return;
-                }
-            }
-            catch (Exception)
-            {
-                return;
-            }
-
+            TabContent.Item1 = false;
+            TabContent.Item2 = null;
             return;
         }
 
