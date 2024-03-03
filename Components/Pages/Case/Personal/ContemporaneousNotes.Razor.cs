@@ -34,8 +34,9 @@ public class ContemporaneousNotesBase : ComponentBase
     protected Dictionary<DateTime, string>? ContemporaneousNotes;
     protected bool? HasContemporaneousNotes;
 
-    // Date Filter
+    // Date Filter and search query
     protected DateRange FilterDateRange = new(null, null);
+    protected string SearchQuery = "";
 
     // Images
     protected string ImageSaveUrl = null!;
@@ -212,6 +213,75 @@ public class ContemporaneousNotesBase : ComponentBase
 
         // Re-render component
         StateHasChanged();
+    }
+    
+    protected async Task SearchQueryChanged()
+    {
+        // This function should not be available to be called if ContemporaneousNotes are null but to satisfy null value checks
+        if (_allContemporaneousNotes == null) return;
+        
+        // If no notes are found then set to null and return
+        if (ContemporaneousNotes == null)
+        {
+            ContemporaneousNotes = _allContemporaneousNotes;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+        
+        // If search query is not set then display all the notes
+        if (string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            ContemporaneousNotes = _allContemporaneousNotes;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        List<API.ContemporaneousNotes> contemporaneousNotes = await LighthouseNotesAPIPost.ContemporaneousNotesSearch(CaseId, SearchQuery);
+        
+        // If list is empty set variables and return
+        if (contemporaneousNotes.Count == 0)
+        {
+            ContemporaneousNotes = _allContemporaneousNotes;
+            Snackbar.Add("Your search returned no results. Showing all contemporaneous notes.", Severity.Warning);
+
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        // Empty dictionary
+        ContemporaneousNotes = new Dictionary<DateTime, string>();
+
+        // Loop through each contemporaneous note in the list
+        foreach (API.ContemporaneousNotes contemporaneousNote in contemporaneousNotes)
+        {
+            // Get note content
+            string noteContent = await LighthouseNotesAPIGet.ContemporaneousNote(CaseId, contemporaneousNote.Id);
+
+            // Create HTML document
+            HtmlDocument htmlDoc = new();
+
+            // Load ContemporaneousNotes Content to HTML
+            htmlDoc.LoadHtml(noteContent);
+
+            // If content contains images
+            if (htmlDoc.DocumentNode.SelectNodes("//img") != null)
+                // For each image that starts with .path/
+                foreach (HtmlNode img in htmlDoc.DocumentNode.SelectNodes("//img")
+                             .Where(u => u.Attributes["src"].Value.Contains(".path/")))
+                {
+                    // Create variable with file name
+                    string fileName = img.Attributes["src"].Value.Replace(".path/", "");
+
+                    // Get presigned s3 url and update image src 
+                    string presignedS3Url = await LighthouseNotesAPIGet.Image(CaseId, "contemporaneous-note", fileName);
+                    img.Attributes["src"].Value = presignedS3Url;
+                }
+
+            // Add contemporaneous note to dictionary
+            ContemporaneousNotes.Add(contemporaneousNote.Created, htmlDoc.DocumentNode.OuterHtml);
+        }
+        
+        await InvokeAsync(StateHasChanged);
     }
 
     // Get notes from s3 bucket, handling errors and fetching images

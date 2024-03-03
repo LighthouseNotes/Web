@@ -98,6 +98,34 @@ public class LighthouseNotesAPIPost
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
+    
+    // POST: /case/?/contemporaneous-notes/search
+    public async Task<List<ContemporaneousNotes>> ContemporaneousNotesSearch(string caseId, string searchQuery)
+    {
+        // Create request
+        HttpRequestMessage request = new(HttpMethod.Post,
+            $"case/{caseId}/contemporaneous-notes/search");
+
+        // Add Bearer token
+        string? token = _tokenProvider.AccessToken;
+        request.Headers.Add("Authorization", $"Bearer {token}");
+
+        // Add data to request body with JSON type
+        request.Content = new StringContent(JsonSerializer.Serialize(new Search { Query = searchQuery }), Encoding.UTF8);
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        // Send request
+        HttpResponseMessage response = await _http.SendAsync(request);
+
+        // If response is not a success status code, throw exception
+        if (!response.IsSuccessStatusCode)
+            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+
+        // Read response and return parsed response
+        string responseContent = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<ContemporaneousNotes>>(responseContent) ??
+               throw new LighthouseNotesErrors.ShouldNotBeNullException();
+    }
 
     // POST: /case/?/shared/contemporaneous-note
     public async Task SharedContemporaneousNote(string caseId, byte[] tabContent)
@@ -126,6 +154,34 @@ public class LighthouseNotesAPIPost
         // If response is not a success status code, throw exception
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+    }
+    
+    // POST: /case/?/shared/contemporaneous-notes/search
+    public async Task<List<SharedContemporaneousNotes>> SharedContemporaneousNotesSearch(string caseId, string searchQuery)
+    {
+        // Create request
+        HttpRequestMessage request = new(HttpMethod.Post,
+            $"case/{caseId}/shared/contemporaneous-notes/search");
+
+        // Add Bearer token
+        string? token = _tokenProvider.AccessToken;
+        request.Headers.Add("Authorization", $"Bearer {token}");
+
+        // Add data to request body with JSON type
+        request.Content = new StringContent(JsonSerializer.Serialize(new Search { Query = searchQuery }), Encoding.UTF8);
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        // Send request
+        HttpResponseMessage response = await _http.SendAsync(request);
+
+        // If response is not a success status code, throw exception
+        if (!response.IsSuccessStatusCode)
+            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+
+        // Read response and return parsed response
+        string responseContent = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<SharedContemporaneousNotes>>(responseContent) ??
+               throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
     // POST: /case/?/tab
