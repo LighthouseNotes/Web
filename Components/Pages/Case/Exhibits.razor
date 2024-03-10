@@ -88,19 +88,22 @@
     <MudText Typo="Typo.subtitle1" Align="Align.Center"> The table below details all exhibits added to the case. </MudText>
     <MudGrid>
         <MudItem xs="12">
-            <MudDataGrid T="Models.API.Exhibit" Items="@Exhibits" Filterable="true">
+            <MudDataGrid @ref="@ExhibitsTable" T="Models.API.Exhibit"  ServerData="LoadGridData" SortMode="SortMode.Single">
                 <Columns>
                     <PropertyColumn Property="x => x.Reference"/>
                     <PropertyColumn Property="x => x.Description"/>
                     <PropertyColumn Property="x => x.DateTimeSeizedProduced" Culture="CultureInfo.CurrentCulture" Format="@Settings.DateTimeFormat" Title="Date & Time Seized / Produced"/>
                     <PropertyColumn Property="x => x.WhereSeizedProduced" Title="Where Seized / Produced"/>
                     <PropertyColumn Property="x => x.SeizedBy" Title="Seized By"/>
-                    <TemplateColumn Title="Actions">
+                    <TemplateColumn Title="Actions" Sortable="false">
                         <CellTemplate>
                             <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Search" Color="Color.Primary" Href="@($"/case/{CaseId}/exhibit/{context.Item.Id}")"> More Details </MudButton>
                         </CellTemplate>
                     </TemplateColumn>
                 </Columns>
+                <PagerContent>
+                     <MudDataGridPager T="API.Exhibit" />
+                </PagerContent>
             </MudDataGrid>
         </MudItem>
     </MudGrid>

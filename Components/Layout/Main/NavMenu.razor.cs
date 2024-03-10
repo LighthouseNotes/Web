@@ -22,7 +22,7 @@ public partial class NavMenuBase : ComponentBase
 
 
     protected string? CurrentUrl;
-    protected List<Case>? Cases;
+    protected (Pagination, List<API.Case>?)  Cases;
     protected List<Tab>? Tabs;
     protected List<SharedTab>? SharedTabs;
     protected string? CaseId;

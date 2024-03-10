@@ -37,7 +37,8 @@ public class CaseBase : ComponentBase
         SCase = await LighthouseNotesAPIGet.Case(CaseId);
 
         // Get users from api
-        _users = await LighthouseNotesAPIGet.Users();
+        (API.Pagination, List<API.User>) usersWithPagination  = await LighthouseNotesAPIGet.Users(1, 0);
+        _users = usersWithPagination.Item2;
 
         // Mark page load as complete 
         PageLoad?.LoadComplete();

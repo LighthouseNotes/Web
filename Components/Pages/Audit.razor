@@ -9,10 +9,13 @@
 
     <MudText Typo="Typo.h1" Align="Align.Center"> Audit Log </MudText>
 
-    <MudDataGrid Items="UserEvents" Filterable="true">
+    <MudDataGrid T="Models.API.UserAudit" ServerData="LoadGridData">
         <Columns>
             <PropertyColumn Property="x => x.DateTime" Culture="CultureInfo.CurrentCulture" Format="@Settings.DateTimeFormat"/>
-            <PropertyColumn Property="x => x.Action" Filterable="false"/>
+            <PropertyColumn Property="x => x.Action"/>
         </Columns>
+        <PagerContent>
+            <MudDataGridPager T="API.UserAudit"/>
+        </PagerContent>
     </MudDataGrid>
 </PageLoad>

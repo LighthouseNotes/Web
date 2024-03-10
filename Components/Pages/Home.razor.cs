@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using Web.Models;
+using MudBlazor;
+using Web.Models.API;
+using Settings = Web.Models.Settings;
 
 namespace Web.Components.Pages;
 
@@ -20,27 +22,20 @@ public class HomeBase : ComponentBase
     // Page variables
     protected PageLoad? PageLoad;
     protected API.User User = null!;
-    protected List<API.Case>? Cases;
     protected Settings Settings = new();
     protected bool DevelopmentMode;
     protected string SearchString = null!;
 
     // Class variables
-    private List<API.User> _users = null!;
     private List<API.User> _sioUsers = null!;
 
     // Page initialized
     protected override async Task OnInitializedAsync()
     {
-        // Fetch all cases the user has access to 
-        Cases = await LighthouseNotesAPIGet.Cases();
-
-        // Get users from api
-        _users = await LighthouseNotesAPIGet.Users();
-
-        // Create a list of users who has the role SIO
-        _sioUsers = _users.Where(u => u.Roles.Contains("sio")).ToList();
-
+        // Get SIO users from api
+        (Pagination, List<API.User>) usersWithPagination  = await LighthouseNotesAPIGet.Users(sio: true);
+        _sioUsers = usersWithPagination.Item2;
+        
         // Check if environment is development
         if (HostEnvironment.IsDevelopment()) DevelopmentMode = true;
 
@@ -71,6 +66,32 @@ public class HomeBase : ComponentBase
         }
     }
 
+    protected async Task<GridData<API.Case>> LoadGridData(GridState<API.Case> state)
+    {
+        // Create sort string
+        string sortString = "";
+        
+        // If sort definition is set then set sort string
+        if(state.SortDefinitions.Count == 1)
+        {
+            // if descending is true then column-name desc else column-name asc
+            sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
+        }
+        
+        // Fetch cases from API
+        (Pagination, List<API.Case>?) cases = await LighthouseNotesAPIGet.Cases(state.Page + 1, state.PageSize, sortString);
+        
+        // Create grid data
+        GridData<API.Case> data = new()
+        {
+            Items = cases.Item2!,
+            TotalItems = cases.Item1.Total
+        };
+        
+        // Return grid data
+        return data;
+    }
+    
     // SIO user search function - searches by given name or last name
     protected async Task<IEnumerable<API.User>> SIOUserSearchFunc(string search)
     {
@@ -79,31 +100,12 @@ public class HomeBase : ComponentBase
             x.GivenName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
             x.LastName.Contains(search, StringComparison.OrdinalIgnoreCase)));
     }
-
-    // Case filter 
-    protected Func<API.Case, bool> QuickFilter => x =>
-    {
-        if (string.IsNullOrWhiteSpace(SearchString))
-            return true;
-
-        if (x.DisplayName.Contains(SearchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.DisplayId.Contains(SearchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (x.SIO.DisplayName.Contains(SearchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
-
+    
     // Case item edit committed 
     protected async Task CommittedItemChanges(API.Case item)
     {
         // Create updated case
-        API.UpdateCase updateCase = new()
+        UpdateCase updateCase = new()
         {
             DisplayId = item.DisplayId,
             Name = item.Name,

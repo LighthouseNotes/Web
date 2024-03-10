@@ -3,7 +3,6 @@ using Auth0.ManagementApi;
 using Auth0.ManagementApi.Models;
 using Auth0.ManagementApi.Paging;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MudBlazor;
 using Web.Components.Dialogs;
 
@@ -19,17 +18,13 @@ public class UsersBase : ComponentBase
     [Inject] private AuthenticationStateProvider AuthenticationState { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private IConfiguration Configuration { get; set; } = default!;
-    [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
     
     // Page variables
-    protected PageLoad? PageLoad;
     protected string RoleSelectValue = "Nothing selected";
-    protected List<API.User> Users = null!;
     protected string? SearchString;
     protected InviteUserForm Model = new();
+    protected MudDataGrid<API.User> UsersTable = null!;
     
-    private Models.Settings _settings = new();
-
     protected class InviteUserForm
     {
         [Required(AllowEmptyStrings = false)] public string EmailAddress { get; set; } = null!;
@@ -37,49 +32,31 @@ public class UsersBase : ComponentBase
         public IEnumerable<string> Roles { get; set; } = new List<string> { "user" };
     }
     
-    // Page rendered
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected async Task<GridData<API.User>> LoadGridData(GridState<API.User> state)
     {
-        if (firstRender)
+        // Create sort string
+        string sortString = "";
+        
+        // If sort definition is set then set sort string
+        if(state.SortDefinitions.Count == 1)
         {
-            // Get user settings from browser storage
-            ProtectedBrowserStorageResult<Models.Settings> result =
-                await ProtectedLocalStore.GetAsync<Models.Settings>("settings");
-
-            // If result is success and not null assign value from browser storage, if result is success and null assign default values, if result is unsuccessful assign default values
-            _settings = result.Success ? result.Value ?? new Models.Settings() : new Models.Settings();
-            
+            // if descending is true then column-name desc else column-name asc
+            sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
         }
+        
+        // Fetch cases from API
+        (API.Pagination, List<API.User>) users = await LighthouseNotesAPIGet.Users(state.Page + 1, state.PageSize, sortString);
+        
+        // Create grid data
+        GridData<API.User> data = new()
+        {
+            Items = users.Item2,
+            TotalItems = users.Item1.Total
+        };
+        
+        // Return grid data
+        return data;
     }
-
-    // Page initialized
-    protected override async Task OnInitializedAsync()
-    {
-        // Fetch all cases the user has access to 
-        Users = await LighthouseNotesAPIGet.Users();
-
-        // Mark page loaded
-        PageLoad?.LoadComplete();
-    }
-
-    // User filter 
-    protected Func<API.User, bool> QuickFilter => x =>
-    {
-        if (string.IsNullOrWhiteSpace(SearchString))
-            return true;
-
-        if (x.DisplayName.Contains(SearchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.GivenName.Contains(SearchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (x.LastName.Contains(SearchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
 
     // Edit user change committed 
     protected async Task CommittedItemChanges(API.User item)
@@ -172,8 +149,8 @@ public class UsersBase : ComponentBase
             // Notify the user
             Snackbar.Add("User deleted!", Severity.Success);
 
-            // Remove deleted user from users list
-            Users.RemoveAll(u => u.Id == userId);
+            // Update data grid
+            await UsersTable.ReloadServerData();
 
             // Re-render component
             await InvokeAsync(StateHasChanged);
@@ -207,6 +184,9 @@ public class UsersBase : ComponentBase
                       throw new InvalidOperationException(
                           "Auth0:Roles:organization-administrator not found in appsettings.json!"));
 
+        // Get current user
+        API.User user = await LighthouseNotesAPIGet.User();
+        
         // Create invite
         await AuthOManagementClient.Organizations.CreateInvitationAsync(organizationId,
             new OrganizationCreateInvitationRequest
@@ -220,7 +200,7 @@ public class UsersBase : ComponentBase
                 // Inviter
                 Inviter = new OrganizationInvitationInviter
                 {
-                    Name = Users.First(u => u.Id == _settings.UserId).DisplayName
+                    Name = user.DisplayName
                 },
 
                 // Web App Client ID

@@ -18,9 +18,9 @@ public class ExhibitsBase : ComponentBase
     // Page variables
     protected PageLoad? PageLoad;
     protected API.Case SCase = null!;
-    protected List<API.Exhibit>? Exhibits;
     protected AddExhibit Model = new();
     protected Settings Settings = new();
+    protected MudDataGrid<API.Exhibit> ExhibitsTable = null!; 
 
     // Class variables
     private readonly ReadOnlyCollection<TimeZoneInfo> _timeZones = TimeZoneInfo.GetSystemTimeZones();
@@ -48,7 +48,6 @@ public class ExhibitsBase : ComponentBase
     {
         // Get case, exhibits and users from API
         SCase = await LighthouseNotesAPIGet.Case(CaseId);
-        Exhibits = await LighthouseNotesAPIGet.Exhibits(CaseId);
 
         // Mark page load as complete 
         PageLoad?.LoadComplete();
@@ -71,6 +70,32 @@ public class ExhibitsBase : ComponentBase
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
+    }
+    
+    protected async Task<GridData<API.Exhibit>> LoadGridData(GridState<API.Exhibit> state)
+    {
+        // Create sort string
+        string sortString = "";
+        
+        // If sort definition is set then set sort string
+        if(state.SortDefinitions.Count == 1)
+        {
+            // if descending is true then column-name desc else column-name asc
+            sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
+        }
+        
+        // Fetch cases from API
+        (API.Pagination, List<API.Exhibit>?) exhibits = await LighthouseNotesAPIGet.Exhibits(CaseId, state.Page + 1, state.PageSize, sortString);
+        
+        // Create grid data
+        GridData<API.Exhibit> data = new()
+        {
+            Items = exhibits.Item2!,
+            TotalItems =exhibits.Item1.Total
+        };
+        
+        // Return grid data
+        return data;
     }
 
     // On valid form submission
@@ -98,14 +123,10 @@ public class ExhibitsBase : ComponentBase
         };
 
         // Call api to create exhibit and get result
-        API.Exhibit newExhibit = await LighthouseNotesAPIPost.Exhibit(CaseId, addExhibit);
+        await LighthouseNotesAPIPost.Exhibit(CaseId, addExhibit);
 
-        // If exhibits list is null create a new list with the exhibit just created
-        if (Exhibits == null)
-            Exhibits = new List<API.Exhibit> { newExhibit };
-        // Else add the exhibit to the list
-        else
-            Exhibits.Add(newExhibit);
+        // Reload the exhibits table
+        await ExhibitsTable.ReloadServerData();
 
         // Clear the form fields
         Model = new AddExhibit();

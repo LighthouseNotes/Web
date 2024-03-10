@@ -23,7 +23,7 @@
 
                 @* Rich text editor *@
                 <SfRichTextEditor ID="RTE" @bind-Value="@RteValue">
-                    <RichTextEditorEvents BeforeUploadImage="BeforeImageUpload" OnImageUploadFailed="@OnImageUploadFailedHandler" OnImageUploadSuccess="@OnImageUploadSuccessHandler"></RichTextEditorEvents>
+                    <RichTextEditorEvents BeforeUploadImage="BeforeImageUpload" OnImageUploadFailed="@ImageUploadFailed" OnImageUploadSuccess="@ImageUploadSuccess"></RichTextEditorEvents>
                     <RichTextEditorImageSettings SaveUrl="@ImageSaveUrl" Path="@ImagePath"/>
                 </SfRichTextEditor>
 
@@ -94,11 +94,17 @@
             {
                 <MudPaper Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
                     <MudToolBar>
-                        <MudTextField T="string" DebounceInterval="500" OnDebounceIntervalElapsed="@( () => SearchQueryChanged())" @bind-Value="SearchQuery"  Label="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Text" Clearable="true" Style=" margin: 19px 0"/>
+                        <MudTextField @ref="@SearchField" T="string" DebounceInterval="500" OnDebounceIntervalElapsed="@( () => SearchQueryChanged())" @bind-Value="SearchQuery"  Label="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Text" Clearable="true" Style=" margin: 19px 0"/>
                         <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
-                        <MudDateRangePicker PickerVariant="PickerVariant.Dialog" Adornment="Adornment.Start" Label="Filter by date" DateRange="FilterDateRange" Clearable="true" DisplayMonths="1" DateRangeChanged="OnTimeRangeChange" Style="max-width: 400px; margin: 19px 0"/>
+                        <MudDateRangePicker PickerVariant="PickerVariant.Dialog" Adornment="Adornment.Start" Label="Filter by date" DateRange="FilterDateRange" Clearable="true" DisplayMonths="1" DateRangeChanged="@( (x) => TimeRangeChanged(x))" Style="max-width: 400px; margin: 19px 0"/>
                         <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
                         <MudSwitch @bind-Checked="ToggleCollapsed" Converter="@(new ToggleCollapseConverter())" Color="Color.Success"> @ToggleCollapsed </MudSwitch>
+                        <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
+                        <MudSelect T="int" Label="Page Size" AnchorOrigin="Origin.BottomCenter" ValueChanged="@((x) => PageSizeChanged(x))" Value="PageSize">
+                            <MudSelectItem Value="@(10)"/>
+                            <MudSelectItem Value="@(25)" />
+                            <MudSelectItem Value="@(50)" />
+                        </MudSelect>
                     </MudToolBar>
                 </MudPaper>
             }
@@ -147,6 +153,12 @@
                 </MudExpansionPanels>
             }
         </div>
-
+        
+         @* Pagination *@
+        <div class="mx-3">
+            <div class="d-flex justify-center flex-grow-1">
+                <MudPagination Color="Color.Primary" Count="@Pages" SelectedChanged="@((x) => PageChanged(x))"/>
+            </div>
+        </div>
     </MudStack>
 </PageLoad>

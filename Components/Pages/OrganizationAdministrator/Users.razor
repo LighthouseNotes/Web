@@ -4,7 +4,7 @@
 @attribute [Authorize(Roles = "organization-administrator")]
 <PageTitle> Users </PageTitle>
 
-<PageLoad @ref="PageLoad">
+<Page>
     <MudText Typo="Typo.h1" Align="Align.Center"> Users </MudText>
     <MudText Typo="Typo.subtitle1" Align="Align.Center"> To invite a user use the invite user form and click / tap 'Invite'. </MudText>
     <MudText Typo="Typo.subtitle1" Align="Align.Center"> Use the users table to modify or delete existing users. </MudText>
@@ -36,7 +36,7 @@
 
         @* Users table *@
         <MudItem xs="12">
-            <MudDataGrid T="API.User" Items="@Users" ReadOnly="false" EditTrigger="DataGridEditTrigger.Manual" EditMode="DataGridEditMode.Form" QuickFilter="@QuickFilter" CommittedItemChanges="@CommittedItemChanges">
+            <MudDataGrid @ref="@UsersTable" T="API.User" ServerData="LoadGridData" ReadOnly="false" EditTrigger="DataGridEditTrigger.Manual" EditMode="DataGridEditMode.Form" CommittedItemChanges="@CommittedItemChanges" SortMode="SortMode.Single">
                 <ToolBarContent>
                     <MudText Typo="Typo.h6"> Users </MudText>
                     <MudSpacer/>
@@ -50,21 +50,21 @@
                     <PropertyColumn Property="x => x.LastName" Title="Last Name" Hidden="true"/>
                     <PropertyColumn Property="x => x.JobTitle" Title="Job Title"/>
                     <PropertyColumn Property="x => x.EmailAddress" Title="Email address" Hidden="true"/>
-                    <TemplateColumn Title="Roles">
+                    <TemplateColumn Title="Roles" Sortable="false">
                         <CellTemplate>
                             <MudChipSet>
-                            @foreach (string role in context.Item.Roles)
-                            {
-                                @if (role == "sio")
+                                @foreach (string role in context.Item.Roles)
                                 {
-                                    <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToUpper(role) </MudChip>
-                                }
-                                else
-                                {
-                                    <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(role) </MudChip>
-                                }
+                                    @if (role == "sio")
+                                    {
+                                        <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToUpper(role) </MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(role) </MudChip>
+                                    }
                                 
-                            }
+                                }
                             </MudChipSet >
                         </CellTemplate>
                         <EditTemplate>
@@ -74,7 +74,7 @@
                             </MudSelect>
                         </EditTemplate>
                     </TemplateColumn>
-                    <TemplateColumn Title="Actions">
+                    <TemplateColumn Title="Actions" Sortable="false">
                         <CellTemplate>
                             <div class="d-flex gap-2 flex-wrap ">
                                 <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.PersonSearch" Color="Color.Primary" Href="@($"/user/{context.Item.Id}")"> More Details </MudButton>
@@ -84,8 +84,11 @@
                         </CellTemplate>
                     </TemplateColumn>
                 </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="API.User" />
+                </PagerContent>
             </MudDataGrid>
         </MudItem>
 
     </MudGrid>
-</PageLoad>
+</Page>

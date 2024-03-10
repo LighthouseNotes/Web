@@ -53,10 +53,21 @@ public class LighthouseNotesAPIGet
     //////////
 
     // GET: /users
-    public async Task<List<User>> Users()
+    public async Task<(Pagination ,List<User>)> Users(int page = 1, int pageSize = 10, string sort = "", bool sio = false)
     {
         // Create request
-        HttpRequestMessage request = new(HttpMethod.Get, "users");
+        HttpRequestMessage request;
+        if (sio)
+        {
+            request = new HttpRequestMessage(HttpMethod.Get, $"users?sio=true");
+        }
+        else
+        {
+            request = string.IsNullOrWhiteSpace(sort)
+                ? new HttpRequestMessage(HttpMethod.Get, $"users?page={page}&pageSize={pageSize}")
+                : new HttpRequestMessage(HttpMethod.Get, $"users?page={page}&pageSize={pageSize}&sort={sort}");
+        }
+     
 
         // Add Bearer token
         string? token = _tokenProvider.AccessToken;
@@ -69,10 +80,17 @@ public class LighthouseNotesAPIGet
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
 
+        Pagination pagination = new()
+        {
+            Page = int.Parse(response.Headers.NonValidated["X-Page"].ToString()),
+            TotalPages = int.Parse(response.Headers.NonValidated["X-Total-Pages"].ToString()),
+            Total = int.Parse(response.Headers.NonValidated["X-Total-Count"].ToString()),
+        };
+        
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<User>>(responseContent) ??
-               throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        return (pagination, JsonSerializer.Deserialize<List<User>>(responseContent) ??
+               throw new LighthouseNotesErrors.ShouldNotBeNullException());
     }
 
     // GET: /user/?
@@ -132,11 +150,13 @@ public class LighthouseNotesAPIGet
     //////////
 
     // GET: /cases
-    public async Task<List<Case>?> Cases()
+    public async Task<(Pagination, List<Case>?)> Cases(int page = 1, int pageSize = 10, string sort = "")
     {
         // Create request
-        HttpRequestMessage request = new(HttpMethod.Get, "cases");
-
+        HttpRequestMessage request = string.IsNullOrWhiteSpace(sort)
+            ? new HttpRequestMessage(HttpMethod.Get, $"cases?page={page}&pageSize={pageSize}")
+            : new HttpRequestMessage(HttpMethod.Get, $"cases?page={page}&pageSize={pageSize}&sort={sort}");
+        
         // Add Bearer token
         string? token = _tokenProvider.AccessToken;
         request.Headers.Add("Authorization", $"Bearer {token}");
@@ -148,9 +168,16 @@ public class LighthouseNotesAPIGet
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
 
+        Pagination pagination = new()
+        {
+            Page = int.Parse(response.Headers.NonValidated["X-Page"].ToString()),
+            TotalPages = int.Parse(response.Headers.NonValidated["X-Total-Pages"].ToString()),
+            Total = int.Parse(response.Headers.NonValidated["X-Total-Count"].ToString()),
+        };
+        
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<Case>>(responseContent);
+        return (pagination, JsonSerializer.Deserialize<List<Case>>(responseContent));
     }
 
     // GET: /case/?
@@ -576,10 +603,12 @@ public class LighthouseNotesAPIGet
     //////////////
 
     // GET: /case/?/exhibits
-    public async Task<List<Exhibit>> Exhibits(string caseId)
+    public async Task<(Pagination, List<Exhibit>)> Exhibits(string caseId, int page = 1, int pageSize = 10, string sort = "")
     {
         // Create request
-        HttpRequestMessage request = new(HttpMethod.Get, $"/case/{caseId}/exhibits");
+        HttpRequestMessage request = string.IsNullOrWhiteSpace(sort)
+            ? new HttpRequestMessage(HttpMethod.Get, $"/case/{caseId}/exhibits?page={page}&pageSize={pageSize}")
+            : new HttpRequestMessage(HttpMethod.Get, $"/case/{caseId}/exhibits?page={page}&pageSize={pageSize}&sort={sort}");
 
         // Add Bearer token
         string? token = _tokenProvider.AccessToken;
@@ -592,10 +621,17 @@ public class LighthouseNotesAPIGet
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
 
+        Pagination pagination = new()
+        {
+            Page = int.Parse(response.Headers.NonValidated["X-Page"].ToString()),
+            TotalPages = int.Parse(response.Headers.NonValidated["X-Total-Pages"].ToString()),
+            Total = int.Parse(response.Headers.NonValidated["X-Total-Count"].ToString()),
+        };
+        
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<Exhibit>>(responseContent) ??
-               throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        return (pagination, JsonSerializer.Deserialize<List<Exhibit>>(responseContent) ??
+                           throw new LighthouseNotesErrors.ShouldNotBeNullException());
     }
 
     // GET: /case/?/exhibit/?
@@ -650,10 +686,10 @@ public class LighthouseNotesAPIGet
     // Audit //
     ///////////
     // GET: /audit/user
-    public async Task<List<UserAudit>> UserAudit()
+    public async Task<(Pagination, List<UserAudit>)> UserAudit(int page = 1, int pageSize = 10)
     {
         // Create request
-        HttpRequestMessage request = new(HttpMethod.Get, "/audit/user");
+        HttpRequestMessage request = new(HttpMethod.Get, $"/audit/user?page={page}&pageSize={pageSize}");
 
         // Add Bearer token
         string? token = _tokenProvider.AccessToken;
@@ -666,9 +702,16 @@ public class LighthouseNotesAPIGet
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
 
+        Pagination pagination = new()
+        {
+            Page = int.Parse(response.Headers.NonValidated["X-Page"].ToString()),
+            TotalPages = int.Parse(response.Headers.NonValidated["X-Total-Pages"].ToString()),
+            Total = int.Parse(response.Headers.NonValidated["X-Total-Count"].ToString()),
+        };
+        
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<UserAudit>>(responseContent) ??
-               throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        return  (pagination, JsonSerializer.Deserialize<List<UserAudit>>(responseContent) ??
+                 throw new LighthouseNotesErrors.ShouldNotBeNullException());
     }
 }

@@ -7,9 +7,9 @@
             @if (CurrentUrl != null && IsCaseUrl())
             {
                 <MudSelect T="string" Value="@CaseId" Label="Case" AnchorOrigin="Origin.BottomCenter" Class="ma-4" SelectedValuesChanged="CaseChanged">
-                    @if (Cases != null)
+                    @if (Cases.Item2 != null)
                     {
-                        @foreach (API.Case sCase in Cases)
+                        @foreach (API.Case sCase in Cases.Item2)
                         {
                             <MudSelectItem Value="sCase.Id">
                                 @sCase.DisplayName

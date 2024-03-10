@@ -52,7 +52,8 @@ public partial class SharedTabBase : ComponentBase
         _caseUsers = SCase.Users.ToList();
 
         // Get exhibits linked to case
-        _exhibits = await LighthouseNotesAPIGet.Exhibits(CaseId);
+        (API.Pagination, List<API.Exhibit>?) exhibitsWithPagination = await LighthouseNotesAPIGet.Exhibits(CaseId, 1, 0);
+        _exhibits = exhibitsWithPagination.Item2!;
 
         // Get tab details
         Tab = await LighthouseNotesAPIGet.SharedTab(CaseId, TabId);

@@ -32,13 +32,14 @@ public class SharedContemporaneousNotesBase : ComponentBase
     protected string ToggleCollapsed = "Expand all";
 
     // Contemporaneous Notes
-    private List<SharedContemporaneousNote>? _allContemporaneousNotes;
-    protected List<SharedContemporaneousNote>? ContemporaneousNotes;
+    private  List<SharedContemporaneousNote>? _contemporaneousNotes; // Default contemporaneous notes with no filtering
+    protected List<SharedContemporaneousNote>? ContemporaneousNotes; // Contemporaneous notes displayed on the page
     protected bool? HasContemporaneousNotes;
 
     // Date Filter and search query
     protected DateRange FilterDateRange = new(null, null);
     protected string SearchQuery = "";
+    protected MudTextField<string> SearchField = null!;
 
     // Images
     protected string ImageSaveUrl = null!;
@@ -55,9 +56,15 @@ public class SharedContemporaneousNotesBase : ComponentBase
     protected API.Case SCase = null!;
     protected List<API.User> CaseUsers = new();
     protected List<API.Exhibit> Exhibits = new();
+    private List<API.SharedContemporaneousNotes> _allContemporaneousNotes = new(); // List of all contemporaneous notes with note id and created date
 
     // Settings
     protected Models.Settings Settings = new();
+    
+    // Pagination
+    private int _page = 1;
+    protected int PageSize = 10;
+    protected int Pages = 1;
 
     // On parameters set 
     protected override async Task OnParametersSetAsync()
@@ -69,13 +76,14 @@ public class SharedContemporaneousNotesBase : ComponentBase
         CaseUsers = SCase.Users.ToList();
 
         // Get exhibits linked to case
-        Exhibits = await LighthouseNotesAPIGet.Exhibits(CaseId);
+        (API.Pagination, List<API.Exhibit>?) exhibitsWithPagination = await LighthouseNotesAPIGet.Exhibits(CaseId, 1, 0);
+        Exhibits = exhibitsWithPagination.Item2!;
 
         // Set image save url
         ImageSaveUrl = $"{Configuration["LighthouseNotesApiUrl"]}/case/{CaseId}/shared/contemporaneous-note/image";
 
         // Get contemporaneous notes 
-        await GetNotes(CaseId);
+        await GetNotes();
 
         // Mark page load as complete 
         PageLoad?.LoadComplete();
@@ -113,7 +121,7 @@ public class SharedContemporaneousNotesBase : ComponentBase
     }
 
     // Add presigned string to image name
-    protected async Task OnImageUploadSuccessHandler(ImageSuccessEventArgs args)
+    protected async Task ImageUploadSuccess(ImageSuccessEventArgs args)
     {
         // Get presigned url for image
         string presignedUrl = await LighthouseNotesAPIGet.SharedImage(CaseId, "contemporaneous-note", args.File.Name);
@@ -123,7 +131,7 @@ public class SharedContemporaneousNotesBase : ComponentBase
     }
 
     // Image upload failed, so notify the user
-    protected void OnImageUploadFailedHandler(ImageFailedEventArgs args)
+    protected void ImageUploadFailed(ImageFailedEventArgs args)
     {
         Snackbar.Add(
             args.Response.StatusCode == 409
@@ -170,62 +178,47 @@ public class SharedContemporaneousNotesBase : ComponentBase
             Encoding.UTF8.GetBytes(htmlDoc.DocumentNode.OuterHtml));
 
         // Refresh notes, empty rich text editor, re-render component, and notify user
-        await GetNotes(CaseId);
+        await GetNotes();
         RteValue = null;
         await InvokeAsync(StateHasChanged);
         Snackbar.Add("Note has successfully been added!", Severity.Success);
     }
 
     // Change which notes are being displayed based on the data range
-    protected void OnTimeRangeChange(DateRange? dateRange)
+    protected async Task TimeRangeChanged(DateRange? dateRange)
     {
         // This function should not be available to be called if ContemporaneousNotes are null but to satisfy null value checks
-        if (_allContemporaneousNotes == null) return;
+        if (_contemporaneousNotes == null) return;
 
         // If no notes are found then set to null and return
         if (ContemporaneousNotes == null)
         {
-            ContemporaneousNotes = _allContemporaneousNotes;
+            ContemporaneousNotes = _contemporaneousNotes;
             return;
         }
 
         // If date range is not set then display all the notes
         if (dateRange == null)
         {
-            ContemporaneousNotes = _allContemporaneousNotes;
+            ContemporaneousNotes = _contemporaneousNotes;
             return;
         }
 
         // Set the date range on the page  
         FilterDateRange = dateRange;
 
-        // Create variables for start date and end date 
-        DateTime? startDate = dateRange.Start;
-        DateTime? endDate = dateRange.End;
-
-        // If either are null then display all the notes 
-        if (startDate == null || endDate == null)
-            ContemporaneousNotes = _allContemporaneousNotes;
-
-        // Else filter the notes based on the provided start and end dates
-        else
-            ContemporaneousNotes = _allContemporaneousNotes.Where(e =>
-                e.Created >= startDate &&
-                e.Created <= endDate).ToList();
-
-        // Re-render component
-        StateHasChanged();
+        await PaginateNotes();
     }
     
      protected async Task SearchQueryChanged()
     {
         // This function should not be available to be called if ContemporaneousNotes are null but to satisfy null value checks
-        if (_allContemporaneousNotes == null) return;
+        if (_contemporaneousNotes == null) return;
         
         // If no notes are found then set to null and return
         if (ContemporaneousNotes == null)
         {
-            ContemporaneousNotes = _allContemporaneousNotes;
+            ContemporaneousNotes = _contemporaneousNotes;
             await InvokeAsync(StateHasChanged);
             return;
         }
@@ -233,7 +226,7 @@ public class SharedContemporaneousNotesBase : ComponentBase
         // If search query is not set then display all the notes
         if (string.IsNullOrWhiteSpace(SearchQuery))
         {
-            ContemporaneousNotes = _allContemporaneousNotes;
+            ContemporaneousNotes = _contemporaneousNotes;
             await InvokeAsync(StateHasChanged);
             return;
         }
@@ -243,18 +236,190 @@ public class SharedContemporaneousNotesBase : ComponentBase
         // If list is empty set variables and return
         if (contemporaneousNotes.Count == 0)
         {
-            ContemporaneousNotes = _allContemporaneousNotes;
+            ContemporaneousNotes = _contemporaneousNotes;
             Snackbar.Add("Your search returned no results. Showing all contemporaneous notes.", Severity.Warning);
 
             await InvokeAsync(StateHasChanged);
             return;
         }
 
-        // Empty dictionary
+        await PaginateNotes();
+    }
+
+    // Page size select change event
+    protected async Task PageSizeChanged(int pageSize)
+    {
+        // Update page size variable 
+        PageSize = pageSize;
+        
+        // Re Calculate pages
+        Pages = (_allContemporaneousNotes.Count + PageSize - 1) / PageSize;
+        
+        // Paginate notes
+        await PaginateNotes();
+    }
+
+    // Page changed event
+    protected async Task PageChanged(int page)
+    {
+        // Update page variable
+        _page = page;
+        
+        // Paginate notes
+        await PaginateNotes();
+    }
+    
+    // Get a list of all notes, calculate number of pages and paginate
+    private async Task GetNotes()
+    {
+        // Get a list of Contemporaneous Notes
+        _allContemporaneousNotes =  await LighthouseNotesAPIGet.SharedContemporaneousNotes(CaseId);
+        
+        // If list is empty set variables and return
+        if ( _allContemporaneousNotes.Count == 0)
+        {
+            HasContemporaneousNotes = false;
+            ContemporaneousNotes = null;
+
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        // Calculate pages
+        Pages = ( _allContemporaneousNotes.Count + PageSize - 1) / PageSize;
+        
+        await PaginateNotes();
+    }
+    
+    // Get notes from s3 bucket, handling errors and fetching images
+    private async Task PaginateNotes()
+    {
+        // Empty list
         ContemporaneousNotes = new List<SharedContemporaneousNote>();
 
+        // If filter date range is set, then use it
+        if (FilterDateRange is { Start: not null, End: not null })
+        {
+            // If no notes match the date filter, then show notes without filter and notify user
+            if (!_allContemporaneousNotes.Any(cn => cn.Created >= FilterDateRange.Start && cn.Created <= FilterDateRange.End))
+            {
+                // Show notes without filter
+                ContemporaneousNotes =  _contemporaneousNotes;
+                
+                // Notify user
+                Snackbar.Add("Your date filter returned no results. Showing all contemporaneous notes.", Severity.Warning);
+
+                FilterDateRange = new DateRange(null, null);
+                await InvokeAsync(StateHasChanged);
+                
+                return;
+            }
+            
+            // Loop through each contemporaneous note in the list
+            foreach (API.SharedContemporaneousNotes contemporaneousNote in _allContemporaneousNotes.Where(cn => cn.Created >= FilterDateRange.Start && cn.Created <= FilterDateRange.End).Skip((_page - 1) * PageSize).Take(PageSize))
+            {
+                // Get note content
+                string noteContent = await LighthouseNotesAPIGet.SharedContemporaneousNote(CaseId, contemporaneousNote.Id);
+
+                // Create HTML document
+                HtmlDocument htmlDoc = new();
+
+                // Load ContemporaneousNotes Content to HTML
+                htmlDoc.LoadHtml(noteContent);
+
+                // If content contains images
+                if (htmlDoc.DocumentNode.SelectNodes("//img") != null)
+                    // For each image that starts with .path/
+                    foreach (HtmlNode img in htmlDoc.DocumentNode.SelectNodes("//img")
+                                 .Where(u => u.Attributes["src"].Value.Contains(".path/")))
+                    {
+                        // Create variable with file name
+                        string fileName = img.Attributes["src"].Value.Replace(".path/", "");
+
+                        // Get presigned s3 url and update image src 
+                        string presignedS3Url = await LighthouseNotesAPIGet.SharedImage(CaseId, "contemporaneous-note", fileName);
+                        img.Attributes["src"].Value = presignedS3Url;
+                    }
+
+                // Add contemporaneous note to dictionary
+                ContemporaneousNotes.Add(new SharedContemporaneousNote
+                {
+                    Content = htmlDoc.DocumentNode.OuterHtml,
+                    Created = contemporaneousNote.Created,
+                    Creator = contemporaneousNote.Creator
+                });
+            }
+            
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        // If search query is set then use it
+        if (!string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            List<API.SharedContemporaneousNotes> contemporaneousNotes = await LighthouseNotesAPIPost.SharedContemporaneousNotesSearch(CaseId, SearchQuery);
+        
+            // If no notes match the search, then show notes without filter and notify user
+            if (contemporaneousNotes.Count == 0)
+            { 
+                // Show notes without filter
+                ContemporaneousNotes =  _contemporaneousNotes;
+                
+                // Notify user
+                Snackbar.Add("Your search returned no results. Showing all contemporaneous notes.", Severity.Warning);
+
+                // Clear search field 
+                await SearchField.Clear();
+                
+                return;
+            }
+            
+            // Re Calculate pages
+            Pages = (contemporaneousNotes.Count + PageSize - 1) / PageSize;
+
+            // Loop through each contemporaneous note in the list
+            foreach (API.SharedContemporaneousNotes contemporaneousNote in contemporaneousNotes.Skip((_page - 1) * PageSize).Take(PageSize))
+            {
+                // Get note content
+                string noteContent = await LighthouseNotesAPIGet.SharedContemporaneousNote(CaseId, contemporaneousNote.Id);
+
+                // Create HTML document
+                HtmlDocument htmlDoc = new();
+
+                // Load ContemporaneousNotes Content to HTML
+                htmlDoc.LoadHtml(noteContent);
+
+                // If content contains images
+                if (htmlDoc.DocumentNode.SelectNodes("//img") != null)
+                    // For each image that starts with .path/
+                    foreach (HtmlNode img in htmlDoc.DocumentNode.SelectNodes("//img")
+                                 .Where(u => u.Attributes["src"].Value.Contains(".path/")))
+                    {
+                        // Create variable with file name
+                        string fileName = img.Attributes["src"].Value.Replace(".path/", "");
+
+                        // Get presigned s3 url and update image src 
+                        string presignedS3Url = await LighthouseNotesAPIGet.SharedImage(CaseId, "contemporaneous-note", fileName);
+                        img.Attributes["src"].Value = presignedS3Url;
+                    }
+
+                // Add contemporaneous note to dictionary
+                ContemporaneousNotes.Add(new SharedContemporaneousNote
+                {
+                    Content = htmlDoc.DocumentNode.OuterHtml,
+                    Created = contemporaneousNote.Created,
+                    Creator = contemporaneousNote.Creator
+                });
+            }
+            
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        _contemporaneousNotes = new List<SharedContemporaneousNote>();
+        
         // Loop through each contemporaneous note in the list
-        foreach (API.SharedContemporaneousNotes contemporaneousNote in contemporaneousNotes)
+        foreach (API.SharedContemporaneousNotes contemporaneousNote in _allContemporaneousNotes.Skip((_page - 1) * PageSize).Take(PageSize))
         {
             // Get note content
             string noteContent = await LighthouseNotesAPIGet.SharedContemporaneousNote(CaseId, contemporaneousNote.Id);
@@ -275,71 +440,12 @@ public class SharedContemporaneousNotesBase : ComponentBase
                     string fileName = img.Attributes["src"].Value.Replace(".path/", "");
 
                     // Get presigned s3 url and update image src 
-                    string presignedS3Url = await LighthouseNotesAPIGet.Image(CaseId, "contemporaneous-note", fileName);
+                    string presignedS3Url = await LighthouseNotesAPIGet.SharedImage(CaseId, "contemporaneous-note", fileName);
                     img.Attributes["src"].Value = presignedS3Url;
                 }
 
             // Add contemporaneous note to dictionary
-            ContemporaneousNotes.Add(new SharedContemporaneousNote()
-            {
-                Creator = contemporaneousNote.Creator,
-                Created = contemporaneousNote.Created,
-                Content = htmlDoc.DocumentNode.OuterHtml,
-            });
-        }
-        
-        await InvokeAsync(StateHasChanged);
-    }
-
-    // Get notes from s3 bucket, handling errors and fetching images
-    private async Task GetNotes(string caseId)
-    {
-        // Get a list of Contemporaneous Notes
-        List<API.SharedContemporaneousNotes> contemporaneousNotes =
-            await LighthouseNotesAPIGet.SharedContemporaneousNotes(caseId);
-
-        // If list is empty set variables and return
-        if (contemporaneousNotes.Count == 0)
-        {
-            HasContemporaneousNotes = false;
-            ContemporaneousNotes = null;
-
-            await InvokeAsync(StateHasChanged);
-            return;
-        }
-
-        // Empty dictionary
-        _allContemporaneousNotes = new List<SharedContemporaneousNote>();
-
-        // Loop through each contemporaneous note in the list
-        foreach (API.SharedContemporaneousNotes contemporaneousNote in contemporaneousNotes)
-        {
-            // Get note content
-            string noteContent = await LighthouseNotesAPIGet.SharedContemporaneousNote(caseId, contemporaneousNote.Id);
-
-            // Create HTML document
-            HtmlDocument htmlDoc = new();
-
-            // Load ContemporaneousNotes Content to HTML
-            htmlDoc.LoadHtml(noteContent);
-
-            // If content contains images
-            if (htmlDoc.DocumentNode.SelectNodes("//img") != null)
-                // For each image that starts with .path/
-                foreach (HtmlNode img in htmlDoc.DocumentNode.SelectNodes("//img")
-                             .Where(u => u.Attributes["src"].Value.Contains(".path/")))
-                {
-                    // Create variable with file name
-                    string fileName = img.Attributes["src"].Value.Replace(".path/", "");
-
-                    // Get presigned s3 url and update image src 
-                    string presignedS3Url =
-                        await LighthouseNotesAPIGet.SharedImage(caseId, "contemporaneous-note", fileName);
-                    img.Attributes["src"].Value = presignedS3Url;
-                }
-
-            // Add contemporaneous note to dictionary
-            _allContemporaneousNotes.Add(new SharedContemporaneousNote
+            _contemporaneousNotes.Add(new SharedContemporaneousNote
             {
                 Content = htmlDoc.DocumentNode.OuterHtml,
                 Created = contemporaneousNote.Created,
@@ -349,7 +455,7 @@ public class SharedContemporaneousNotesBase : ComponentBase
 
         // Set values
         HasContemporaneousNotes = true;
-        ContemporaneousNotes = _allContemporaneousNotes;
+        ContemporaneousNotes = _contemporaneousNotes;
     }
 
     // Block user navigation if rich text editor contains content
@@ -405,7 +511,7 @@ public class SharedContemporaneousNotesBase : ComponentBase
         // If result is not canceled, means note has been added so get notes
         if (!result.Canceled)
         {
-            await GetNotes(CaseId);
+            await GetNotes();
             await InvokeAsync(StateHasChanged);
         }
     }
