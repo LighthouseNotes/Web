@@ -1,4 +1,5 @@
 ﻿@using Theme = Web.Components.Layout.Theme
+@using System.Reflection
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
@@ -8,31 +9,74 @@
 <MudSnackbarProvider/>
 
 <MudLayout>
-    <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => DrawerToggle())"/>
-        <MudImage Src="img/logo.png" Alt="Lighthouse Notes Logo" Class="rounded-lg" Height="60" Style="padding-right: 12px;"/>
-        <MudDivider Vertical="true"/>
-        <MudIconButton Icon="@Icons.Material.Filled.Home" Color="Color.Inherit" OnClick="@HomeClick"/>
-        <MudSpacer/>
-        <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight">
-            <MudMenuItem Icon="@Icons.Material.Filled.Map" Href="account/localization"> Localization </MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.ManageAccounts" Href="account/profile"> Profile </MudMenuItem>
-            <AuthorizeView>
-                <Authorized>
-                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Edge="Edge.End" Href="account/logout" ForceLoad="true"> Logout </MudMenuItem>
-                </Authorized>
-                <NotAuthorized>
-                    <MudMenuItem Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Edge="Edge.End" Href="@_loginUrl" ForceLoad="true"> Login </MudMenuItem>
-                </NotAuthorized>
-            </AuthorizeView>
-        </MudMenu>
-    </MudAppBar>
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
-        <NavMenu @bind-ContainsItems="_navMenuContainsItems"/>
-    </MudDrawer>
-    <MudMainContent>
-        @Body
-    </MudMainContent>
+    <div class="container">
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => DrawerToggle())"/>
+            <MudImage Src="img/logo.png" Alt="Lighthouse Notes Logo" Class="rounded-lg" Height="60" Style="padding-right: 12px;"/>
+            <MudDivider Vertical="true"/>
+            <MudIconButton Icon="@Icons.Material.Filled.Home" Color="Color.Inherit" OnClick="@HomeClick"/>
+            <MudSpacer/>
+            <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight">
+                <MudMenuItem Icon="@Icons.Material.Filled.Map" Href="account/localization"> Localization </MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.ManageAccounts" Href="account/profile"> Profile </MudMenuItem>
+                <AuthorizeView>
+                    <Authorized>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Edge="Edge.End" Href="account/logout" ForceLoad="true"> Logout </MudMenuItem>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Edge="Edge.End" Href="@_loginUrl" ForceLoad="true"> Login </MudMenuItem>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </MudMenu>
+        </MudAppBar>
+        <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+            <NavMenu @bind-ContainsItems="_navMenuContainsItems"/>
+        </MudDrawer>
+        <MudMainContent>
+            @Body
+        </MudMainContent>
+    </div>
+    <MudBreakpointProvider>
+        <MudHidden Breakpoint="Breakpoint.SmAndDown">
+            <footer class="d-flex justify-center flex-grow-1 mt-4 pa-4 @_footerAnimation" style="margin-left: @_footerMargin">
+                <MudGrid Justify="Justify.SpaceBetween">
+                    <MudItem sm="12" md="6" xl="4">
+                        <MudText> Lighthouse Notes <b> Web </b> </MudText>
+                        <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse Notes  </MudText>   
+                    </MudItem>
+                    <MudItem sm="12" md="6" xl="4">
+                        <MudText>
+                            Lighthouse Notes is a source available digital forensics note taking application.
+                        </MudText>
+                        <MudText>
+                            <MudLink Href="https://github.com/LighthouseNotes/Web"> Web app source code </MudLink> | <MudLink Href="https://github.com/LighthouseNotes/Server"> Server source code </MudLink> |<MudLink Href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 Licence </MudLink> | <MudLink Href="https://github.com/bxdavies"> Developed by Ben </MudLink>
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+                   
+            </footer>
+        </MudHidden>
+        <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                 <footer class="d-flex justify-center flex-grow-1 mt-4 pa-4">
+                        <MudGrid Justify="Justify.SpaceBetween">
+                            <MudItem sm="12" md="6" xl="4">
+                                <MudText> Lighthouse Notes <b> Web </b> </MudText>
+                                <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse Notes  </MudText>   
+                            </MudItem>
+                            <MudItem sm="12" md="6" xl="4">
+                                <MudText>
+                                    Lighthouse Notes is a source available digital forensics note taking application.
+                                </MudText>
+                                <MudText>
+                                    <MudLink Href="https://github.com/LighthouseNotes/Web"> Web app source code </MudLink> | <MudLink Href="https://github.com/LighthouseNotes/Server"> Server source code </MudLink> |<MudLink Href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 Licence </MudLink> | <MudLink Href="https://github.com/bxdavies"> Developed by Ben </MudLink>
+                                </MudText>
+                            </MudItem>
+                        </MudGrid>
+                       
+                    </footer>
+            </MudHidden>
+    </MudBreakpointProvider>
+   
 </MudLayout>
 
 @code {
@@ -43,6 +87,9 @@
     private readonly MudTheme _lighthouseNotesTheme = Theme.LighthouseNotesTheme;
     private string _loginUrl = "/account/login?returnUrl=/";
     private string _currentUrl = "/";
+    private string _footerMargin = "0px";
+    private string _footerAnimation = "";
+    private string _version = "0.0.0";
 
     protected override void OnInitialized()
     {
@@ -58,6 +105,18 @@
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
+        if (_drawerOpen)
+        {
+            _footerAnimation = "footer-in";
+            _footerMargin = _lighthouseNotesTheme.LayoutProperties.DrawerWidthLeft;
+            
+        }
+        else
+        {
+            _footerAnimation = "";
+            _footerMargin = "0px";
+            
+        }
     }
 
     // On system preference change - enable or disable dark mode based on preference
@@ -82,10 +141,21 @@
         // If this is the first render
         if (firstRender)
         {
+            _version = Assembly.GetEntryAssembly()!.GetName().Version?.ToString(3) ?? "0.0.0";
             // If navigation menu contains items, open it.
             if (_navMenuContainsItems)
             {
                 _drawerOpen = true;
+                _footerAnimation = "footer-in";
+                _footerMargin = _lighthouseNotesTheme.LayoutProperties.DrawerWidthLeft;
+                
+            }
+            else
+            {
+                _drawerOpen = false;
+                _footerAnimation = "";
+                _footerMargin = "0px";
+               
             }
 
             // Set dark mode to true / false based on system preference
