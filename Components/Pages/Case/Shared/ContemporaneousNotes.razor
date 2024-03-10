@@ -152,7 +152,7 @@
                                             </MudAvatar>
                                         </MudLink>
                                     </MudTooltip>
-                                    <MudText Typo="Typo.h6">@(TimeZoneInfo.ConvertTimeFromUtc(contemporaneousNote.Created, TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone)).ToString(Settings.DateTimeFormat))</MudText>
+                                    <MudText Typo="Typo.h6" Style="margin-left: 0.5em;  align-self: center;">@(TimeZoneInfo.ConvertTimeFromUtc(contemporaneousNote.Created, TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone)).ToString(Settings.DateTimeFormat))</MudText>
                                 </div>
                             </TitleContent>
                             <ChildContent>
