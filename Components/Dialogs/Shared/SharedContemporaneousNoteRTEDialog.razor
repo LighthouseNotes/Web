@@ -31,7 +31,7 @@
                     <SfMention TItem="API.User" Target="#RTE_rte-editable" DataSource="@CaseUsers" SuggestionCount=8 AllowSpaces="true" PopupHeight="200px" PopupWidth="250px" Context="User">
                         <ItemTemplate>
                             <MudStack Row="true">
-                                <MudAvatar Image="@User.ProfilePicture" Size="Size.Medium" Square="true"/>
+                                <MudAvatar Image="@User.ProfilePicture" Size="Size.Medium"/>
                                 <MudStack Justify="Justify.Center" Spacing="0">
                                     <MudText Typo="Typo.body1">@User.DisplayName</MudText>
                                     <MudText Typo="Typo.body2">@User.JobTitle</MudText>
