@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using Web.Models.API;
 using Settings = Web.Models.Settings;
@@ -25,6 +26,7 @@ public class HomeBase : ComponentBase
     protected Settings Settings = new();
     protected bool DevelopmentMode;
     protected string SearchString = null!;
+    protected MudDataGrid<API.Case> CasesTable = null!;
 
     // Class variables
     private List<API.User> _sioUsers = null!;
@@ -68,18 +70,26 @@ public class HomeBase : ComponentBase
 
     protected async Task<GridData<API.Case>> LoadGridData(GridState<API.Case> state)
     {
-        // Create sort string
-        string sortString = "";
-        
+        // Fetch cases from API
+        (Pagination, List<API.Case>?) cases;
+        if (!string.IsNullOrWhiteSpace(SearchString))
+        {
+            // Fetch cases from API
+            cases = await LighthouseNotesAPIGet.Cases(state.Page + 1, state.PageSize, search: SearchString);
+        }
         // If sort definition is set then set sort string
-        if(state.SortDefinitions.Count == 1)
+        else if(state.SortDefinitions.Count == 1)
         {
             // if descending is true then column-name desc else column-name asc
-            sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
+            string sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
+
+            // Fetch cases from API
+            cases = await LighthouseNotesAPIGet.Cases(state.Page + 1, state.PageSize, sortString);
         }
-        
-        // Fetch cases from API
-        (Pagination, List<API.Case>?) cases = await LighthouseNotesAPIGet.Cases(state.Page + 1, state.PageSize, sortString);
+        else
+        {
+            cases = await LighthouseNotesAPIGet.Cases(state.Page + 1, state.PageSize);
+        }
         
         // Create grid data
         GridData<API.Case> data = new()
@@ -90,6 +100,15 @@ public class HomeBase : ComponentBase
         
         // Return grid data
         return data;
+    }
+
+    protected async Task Search()
+    {
+        if (CasesTable.SortDefinitions.Count == 1)
+        {
+            await CasesTable.RemoveSortAsync(CasesTable.SortDefinitions.First().Value.SortBy);
+        }
+        await CasesTable.ReloadServerData();
     }
     
     // SIO user search function - searches by given name or last name

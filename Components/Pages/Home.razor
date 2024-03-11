@@ -41,13 +41,14 @@
     </MudGrid>
 
     @* Cases *@
-    <MudText Typo="Typo.h2"> Cases </MudText>
     <MudGrid class="my-3">
         <MudItem xs="12">
-            <MudDataGrid T="Models.API.Case" ServerData="LoadGridData" EditTrigger="DataGridEditTrigger.Manual" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" SortMode="SortMode.Single">
+            <MudDataGrid @ref="CasesTable" T="Models.API.Case" ServerData="LoadGridData" EditTrigger="DataGridEditTrigger.Manual" EditMode="DataGridEditMode.Form" ReadOnly="false" CommittedItemChanges="@CommittedItemChanges" SortMode="SortMode.Single">
                 <ToolBarContent>
-                    <MudTextField T="string" @bind-Value="SearchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0">
+                    <MudText Typo="Typo.h6"> Cases </MudText>
+                    <MudSpacer/>
+                    <MudTextField T="string" @bind-Value="SearchString" Placeholder="Search" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" DebounceInterval="500" OnDebounceIntervalElapsed="@(() => Search())" Clearable="true">
                     </MudTextField>
                 </ToolBarContent>
                 <Columns>

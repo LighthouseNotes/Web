@@ -53,21 +53,28 @@ public class LighthouseNotesAPIGet
     //////////
 
     // GET: /users
-    public async Task<(Pagination ,List<User>)> Users(int page = 1, int pageSize = 10, string sort = "", bool sio = false)
+    public async Task<(Pagination ,List<User>)> Users(int page = 1, int pageSize = 10, string sort = "", bool sio = false, string search = "")
     {
+        
         // Create request
         HttpRequestMessage request;
+            
         if (sio)
         {
             request = new HttpRequestMessage(HttpMethod.Get, $"users?sio=true");
         }
+        else if(!string.IsNullOrWhiteSpace(sort))
+        {
+            request = new HttpRequestMessage(HttpMethod.Get, $"users?page={page}&pageSize={pageSize}&sort={sort}");
+        }
+        else if (!string.IsNullOrWhiteSpace(search))
+        {
+            request = new HttpRequestMessage(HttpMethod.Get, $"users?page={page}&pageSize={pageSize}&search={search}");
+        }
         else
         {
-            request = string.IsNullOrWhiteSpace(sort)
-                ? new HttpRequestMessage(HttpMethod.Get, $"users?page={page}&pageSize={pageSize}")
-                : new HttpRequestMessage(HttpMethod.Get, $"users?page={page}&pageSize={pageSize}&sort={sort}");
+            request = new HttpRequestMessage(HttpMethod.Get, $"users?page={page}&pageSize={pageSize}");
         }
-     
 
         // Add Bearer token
         string? token = _tokenProvider.AccessToken;
@@ -150,12 +157,23 @@ public class LighthouseNotesAPIGet
     //////////
 
     // GET: /cases
-    public async Task<(Pagination, List<Case>?)> Cases(int page = 1, int pageSize = 10, string sort = "")
+    public async Task<(Pagination, List<Case>?)> Cases(int page = 1, int pageSize = 10, string sort = "", string search = "")
     {
         // Create request
-        HttpRequestMessage request = string.IsNullOrWhiteSpace(sort)
-            ? new HttpRequestMessage(HttpMethod.Get, $"cases?page={page}&pageSize={pageSize}")
-            : new HttpRequestMessage(HttpMethod.Get, $"cases?page={page}&pageSize={pageSize}&sort={sort}");
+        HttpRequestMessage request;
+            
+        if(!string.IsNullOrWhiteSpace(sort))
+        {
+            request = new HttpRequestMessage(HttpMethod.Get, $"cases?page={page}&pageSize={pageSize}&sort={sort}");
+        }
+        else if (!string.IsNullOrWhiteSpace(search))
+        {
+            request = new HttpRequestMessage(HttpMethod.Get, $"cases?page={page}&pageSize={pageSize}&search={search}");
+        }
+        else
+        {
+            request = new HttpRequestMessage(HttpMethod.Get, $"cases?page={page}&pageSize={pageSize}");
+        }
         
         // Add Bearer token
         string? token = _tokenProvider.AccessToken;

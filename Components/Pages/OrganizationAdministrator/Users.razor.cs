@@ -34,18 +34,27 @@ public class UsersBase : ComponentBase
     
     protected async Task<GridData<API.User>> LoadGridData(GridState<API.User> state)
     {
-        // Create sort string
-        string sortString = "";
-        
+        // Fetch cases from API
+        (API.Pagination, List<API.User>) users;
+        if (!string.IsNullOrWhiteSpace(SearchString))
+        {
+            // Fetch users from API
+            users = await LighthouseNotesAPIGet.Users(state.Page + 1, state.PageSize, search: SearchString);
+        }
         // If sort definition is set then set sort string
-        if(state.SortDefinitions.Count == 1)
+        else if(state.SortDefinitions.Count == 1)
         {
             // if descending is true then column-name desc else column-name asc
-            sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
+            string sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
+
+            // Fetch users from API
+            users = await LighthouseNotesAPIGet.Users(state.Page + 1, state.PageSize, sortString);
         }
-        
-        // Fetch cases from API
-        (API.Pagination, List<API.User>) users = await LighthouseNotesAPIGet.Users(state.Page + 1, state.PageSize, sortString);
+        else
+        {
+            // Fetch users from API
+            users = await LighthouseNotesAPIGet.Users(state.Page + 1, state.PageSize);
+        }
         
         // Create grid data
         GridData<API.User> data = new()
@@ -56,6 +65,15 @@ public class UsersBase : ComponentBase
         
         // Return grid data
         return data;
+    }
+
+    protected async Task Search()
+    {
+        if (UsersTable.SortDefinitions.Count == 1)
+        {
+            await UsersTable.RemoveSortAsync(UsersTable.SortDefinitions.First().Value.SortBy);
+        }
+        await UsersTable.ReloadServerData();
     }
 
     // Edit user change committed 
