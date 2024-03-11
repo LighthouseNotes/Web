@@ -30,6 +30,8 @@ public class ConfigBase : ComponentBase
         [Required] public string S3AccessKey { get; set; } = null!;
 
         [Required] public string S3SecretKey { get; set; } = null!;
+        [Required] public string MeilisearchUrl { get; set; } = null!;
+        [Required] public string MeilisearchApiKey { get; set; } = null!;
     }
 
     // Page initialized
@@ -44,6 +46,8 @@ public class ConfigBase : ComponentBase
         Model.S3NetworkEncryption = _organizationSettings.S3NetworkEncryption;
         Model.S3AccessKey = _organizationSettings.S3AccessKey!;
         Model.S3SecretKey = _organizationSettings.S3SecretKey!;
+        Model.MeilisearchUrl = _organizationSettings.MeilisearchUrl!;
+        Model.MeilisearchApiKey = _organizationSettings.MeilisearchApiKey!;
         
         // Mark page load as complete
         PageLoad?.LoadComplete();
@@ -59,7 +63,9 @@ public class ConfigBase : ComponentBase
             S3BucketName = Model.S3BucketName != _organizationSettings.S3BucketName ? Model.S3BucketName : null,
             S3NetworkEncryption = Model.S3NetworkEncryption,
             S3AccessKey = Model.S3AccessKey != _organizationSettings.S3AccessKey ? Model.S3AccessKey : null,
-            S3SecretKey = Model.S3SecretKey != _organizationSettings.S3SecretKey ? Model.S3SecretKey : null
+            S3SecretKey = Model.S3SecretKey != _organizationSettings.S3SecretKey ? Model.S3SecretKey : null,
+            MeilisearchUrl = Model.MeilisearchUrl != _organizationSettings.MeilisearchUrl ? Model.MeilisearchUrl : null,
+            MeilisearchApiKey = Model.MeilisearchApiKey != _organizationSettings.MeilisearchApiKey ? Model.MeilisearchApiKey : null
         });
 
         // Notify the user

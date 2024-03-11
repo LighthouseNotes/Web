@@ -22,6 +22,8 @@
                             <MudTextField T="string" Label="S3 Bucket Name" @bind-Value="Model.S3BucketName" For="@(() => Model.S3BucketName)"/>
                             <MudTextField T="string" Label="S3 Access Key" @bind-Value="Model.S3AccessKey" For="@(() => Model.S3AccessKey)"/>
                             <MudTextField T="string" Label="S3 Secret Key" @bind-Value="Model.S3SecretKey" For="@(() => Model.S3SecretKey)" InputType="InputType.Password"/>
+                            <MudTextField T="string" Label="Meilisearch URL" @bind-Value="Model.MeilisearchUrl" For="@(() => Model.MeilisearchUrl)"/>
+                            <MudTextField T="string" Label="Meilisearch API Key" @bind-Value="Model.MeilisearchApiKey" For="@(() => Model.MeilisearchApiKey)" InputType="InputType.Password"/>
                         </MudCardContent>
                         <MudCardActions>
                             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"> Save </MudButton>
