@@ -93,8 +93,8 @@
             @if (HasContemporaneousNotes == true && ContemporaneousNotes != null)
             {
                 <MudPaper Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
-                    <MudToolBar>
-                        <MudTextField @ref="@SearchField" T="string" DebounceInterval="500" OnDebounceIntervalElapsed="@( () => SearchQueryChanged())" @bind-Value="SearchQuery"  Label="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Text" Clearable="true" Style=" margin: 19px 0"/>
+                    <MudToolBar WrapContent="true">
+                        <MudTextField T="string" DebounceInterval="500" OnDebounceIntervalElapsed="@( () => SearchQueryChanged())" @bind-Value="SearchQuery"  Label="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Text" Clearable="true" Style=" margin: 19px 0"/>
                         <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>
                         <MudDateRangePicker PickerVariant="PickerVariant.Dialog" Adornment="Adornment.Start" Label="Filter by date" DateRange="FilterDateRange" Clearable="true" DisplayMonths="1" DateRangeChanged="@( (x) => TimeRangeChanged(x))" Style="max-width: 400px; margin: 19px 0"/>
                         <MudDivider Vertical="true" FlexItem="true" Class="ma-4"/>

@@ -37,7 +37,6 @@ public class ContemporaneousNotesBase : ComponentBase
     // Date Filter and search query
     protected DateRange FilterDateRange = new(null, null);
     protected string SearchQuery = "";
-    protected MudTextField<string> SearchField = null!;
 
     // Images
     protected string ImageSaveUrl = null!;
@@ -292,15 +291,6 @@ public class ContemporaneousNotesBase : ComponentBase
             // If no notes match the date filter, then show notes without filter and notify user
             if (!_allContemporaneousNotes.Any(cn => cn.Created >= FilterDateRange.Start && cn.Created <= FilterDateRange.End))
             {
-                // Show notes without filter
-                ContemporaneousNotes =  _contemporaneousNotes;
-                
-                // Notify user
-                Snackbar.Add("Your date filter returned no results. Showing all contemporaneous notes.", Severity.Warning);
-
-                FilterDateRange = new DateRange(null, null);
-                await InvokeAsync(StateHasChanged);
-                
                 return;
             }
             
@@ -345,16 +335,7 @@ public class ContemporaneousNotesBase : ComponentBase
         
             // If no notes match the search, then show notes without filter and notify user
             if (contemporaneousNotes.Count == 0)
-            { 
-                // Show notes without filter
-                ContemporaneousNotes =  _contemporaneousNotes;
-                
-                // Notify user
-                Snackbar.Add("Your search returned no results. Showing all contemporaneous notes.", Severity.Warning);
-
-                // Clear search field 
-                await SearchField.Clear();
-                
+            {
                 return;
             }
             
