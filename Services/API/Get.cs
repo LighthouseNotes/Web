@@ -529,7 +529,7 @@ public class LighthouseNotesAPIGet
         Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ?? throw new LighthouseNotesErrors.ShouldNotBeNullException();
         
         // If error message is one about hashes display it
-        if (errorMessage.Title == "Can not find the S3 object for the tab!")
+        if (errorMessage.Title == "Can not find the S3 object for the shared tab!")
             return (false, responseContent);
             
         throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
