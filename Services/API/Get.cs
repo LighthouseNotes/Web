@@ -572,7 +572,7 @@ public class LighthouseNotesAPIGet
         
         // If error message is one about hashes display it
         if(errorMessage.Title == "Could not find hash value for the image!" || errorMessage.Title == "MD5 hash verification failed!" || errorMessage.Title == "SHA256 hash verification failed!")
-            return $"/img/logo.png";
+            return $"/img/image-error.jpeg";
        
         throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
@@ -610,8 +610,8 @@ public class LighthouseNotesAPIGet
         Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ?? throw new LighthouseNotesErrors.ShouldNotBeNullException();
         
         // If error message is one about hashes display it
-        if(errorMessage.Title == "Could not find hash value for the image!" || errorMessage.Title == "MD5 hash verification failed!" || errorMessage.Title == "SHA256 hash verification failed!")
-            return $"/img/logo.png";
+        if(errorMessage.Title == "Could not find hash value for the shared image!" || errorMessage.Title == "MD5 hash verification failed!" || errorMessage.Title == "SHA256 hash verification failed!")
+            return $"/img/image-error.jpeg";
        
         throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
