@@ -1,13 +1,10 @@
-﻿using System.Text.Json;
-using System.Text.RegularExpressions;
-using HtmlAgilityPack;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+﻿using HtmlAgilityPack;
 using MudBlazor;
 
 
 namespace Web.Components.Pages.Case.Shared;
 
-public partial class SharedTabBase : ComponentBase
+public class SharedTabBase : ComponentBase
 {
     [Parameter] public required string CaseId { get; set; }
 
@@ -19,10 +16,10 @@ public partial class SharedTabBase : ComponentBase
 
     [Inject] private IConfiguration Configuration { get; set; } = default!;
 
-    [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
+    [Inject] private ISettingsService SettingsService { get; set; } = default!;
+
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-
-
+    
     // API Objects
     protected API.SharedTab Tab = null!;
     protected API.Case SCase = null!;
@@ -71,17 +68,16 @@ public partial class SharedTabBase : ComponentBase
         await InvokeAsync(StateHasChanged);
     }
 
+    // After page render
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        // If settings is null the get the settings
+        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
+            Settings.S3Endpoint == null)
         {
-            // Get user settings from browser storage
-            ProtectedBrowserStorageResult<Models.Settings> result =
-                await ProtectedLocalStore.GetAsync<Models.Settings>("settings");
-
-            // If result is success and not null assign value from browser storage, if result is success and null assign default values, if result is unsuccessful assign default values
-            Settings = result.Success ? result.Value ?? new Models.Settings() : new Models.Settings();
-
+            // Use the setting service to retrieve the settings
+            Settings = await SettingsService.Get();
+            
             // Set Image Path
             _imagePath =
                 $"{Settings.S3Endpoint}/cases/{CaseId}/shared/tabs/images/";
@@ -167,7 +163,4 @@ public partial class SharedTabBase : ComponentBase
             await InvokeAsync(StateHasChanged);
         }
     }
-
-    [GeneratedRegex("Can not find the S3 object for the shared tab with the ID `.+` at the following path `.+`.")]
-    private static partial Regex MyRegex();
 }

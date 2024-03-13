@@ -96,6 +96,7 @@ builder.Services.AddScoped<LighthouseNotesAPIDelete>();
 // Services
 builder.Services.AddScoped<SpinnerService>();
 builder.Services.AddScoped<TokenProvider>();
+builder.Services.AddScoped<ISettingsService, SettingsService>();
 
 // Build app
 WebApplication app = builder.Build();

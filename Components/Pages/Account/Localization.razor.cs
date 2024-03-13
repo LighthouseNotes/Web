@@ -13,6 +13,7 @@ public class LocalizationBase : ComponentBase
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private LighthouseNotesAPIPut LighthouseNotesAPIPut { get; set; } = default!;
     [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
+    [Inject] private ISettingsService SettingsService { get; set; } = default!;
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
 
@@ -41,15 +42,12 @@ public class LocalizationBase : ComponentBase
     // Page rendered
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        // If settings is null the get the settings
+        if (_settings.Auth0UserId == null || _settings.OrganizationId == null || _settings.UserId == null || _settings.S3Endpoint == null)
         {
-            // Get user settings from browser storage
-            ProtectedBrowserStorageResult<Settings> result =
-                await ProtectedLocalStore.GetAsync<Settings>("settings");
-
-            // If result is success and not null assign value from browser storage, if result is success and null assign default values, if result is unsuccessful assign default values
-            _settings = result.Success ? result.Value ?? new Settings() : new Settings();
-
+            // Use the setting service to retrieve the settings
+            _settings = await SettingsService.Get();
+            
             // Set model from settings 
             Model.TimeZone = TimeZoneInfo.FindSystemTimeZoneById(_settings.TimeZone);
             Model.Culture = CultureInfo.CurrentCulture;

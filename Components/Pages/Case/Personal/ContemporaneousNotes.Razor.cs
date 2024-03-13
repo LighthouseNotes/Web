@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MudBlazor;
 using Syncfusion.Blazor.RichTextEditor;
 
@@ -22,8 +21,8 @@ public class ContemporaneousNotesBase : ComponentBase
     [Inject] private IDialogService Dialog { get; set; } = default!;
 
     [Inject] private IConfiguration Configuration { get; set; } = default!;
-
-    [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
+    
+    [Inject] private ISettingsService SettingsService { get; set; } = default!;
 
     // Contemporaneous Notes Expansion Panel Variables
     private protected static MudExpansionPanels? ContemporaneousNotesCollapse;
@@ -92,19 +91,17 @@ public class ContemporaneousNotesBase : ComponentBase
     // After page render
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        // If settings is null the get the settings
+        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
+            Settings.S3Endpoint == null)
         {
-            // Get user settings from browser storage
-            ProtectedBrowserStorageResult<Models.Settings> result =
-                await ProtectedLocalStore.GetAsync<Models.Settings>("settings");
-
-            // If result is success and not null assign value from browser storage, if result is success and null assign default values, if result is unsuccessful assign default values
-            Settings = result.Success ? result.Value ?? new Models.Settings() : new Models.Settings();
-
+            // Use the setting service to retrieve the settings
+            Settings = await SettingsService.Get();
+            
             // Set Image Path
             ImagePath =
                 $"{Settings.S3Endpoint}/cases/{CaseId}/{Settings.UserId}/contemporaneous-notes/images/";
-
+            
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }

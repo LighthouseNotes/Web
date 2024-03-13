@@ -1,7 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MudBlazor;
 using Web.Models;
 
@@ -12,7 +11,7 @@ public class ExhibitsBase : ComponentBase
     [Parameter] public required string CaseId { get; set; }
     [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
     [Inject] private LighthouseNotesAPIPost LighthouseNotesAPIPost { get; set; } = default!;
-    [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
+    [Inject] private ISettingsService SettingsService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
     // Page variables
@@ -56,17 +55,14 @@ public class ExhibitsBase : ComponentBase
     // After page render
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        // If settings is null the get the settings
+        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null || Settings.S3Endpoint == null)
         {
-            // Get user settings from browser storage
-            ProtectedBrowserStorageResult<Settings> result =
-                await ProtectedLocalStore.GetAsync<Settings>("settings");
-
-            // If result is success and not null assign value from browser storage, if result is success and null assign default values, if result is unsuccessful assign default values
-            Settings = result.Success ? result.Value ?? new Settings() : new Settings();
-
+            // Use the setting service to retrieve the settings
+            Settings = await SettingsService.Get();
+            
             Model.TimeZone = TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone);
-
+            
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
