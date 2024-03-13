@@ -42,7 +42,7 @@ public class CreateCaseBase : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         // Get users from api
-        (API.Pagination, List<API.User>) usersWithPagination  = await LighthouseNotesAPIGet.Users(1, 0);
+        (API.Pagination, List<API.User>) usersWithPagination = await LighthouseNotesAPIGet.Users(1, 0);
         _users = usersWithPagination.Item2;
 
         // Create a list of users who has the role SIO

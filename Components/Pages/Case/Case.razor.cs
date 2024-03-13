@@ -18,7 +18,7 @@ public class CaseBase : ComponentBase
 
     // Page variables
     protected API.Case SCase = null!;
-    protected Models.Settings Settings = new ();
+    protected Models.Settings Settings = new();
     protected PageLoad? PageLoad;
     protected AddCaseUserForm Model = new();
 
@@ -37,7 +37,7 @@ public class CaseBase : ComponentBase
         SCase = await LighthouseNotesAPIGet.Case(CaseId);
 
         // Get users from api
-        (API.Pagination, List<API.User>) usersWithPagination  = await LighthouseNotesAPIGet.Users(1, 0);
+        (API.Pagination, List<API.User>) usersWithPagination = await LighthouseNotesAPIGet.Users(1, 0);
         _users = usersWithPagination.Item2;
 
         // Mark page load as complete 
@@ -51,11 +51,12 @@ public class CaseBase : ComponentBase
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // If settings is null the get the settings
-        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null || Settings.S3Endpoint == null)
+        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
+            Settings.S3Endpoint == null)
         {
             // Use the setting service to retrieve the settings
             Settings = await SettingsService.Get();
-            
+
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
@@ -94,7 +95,7 @@ public class CaseBase : ComponentBase
 
         // Clear the form fields
         Model = new AddCaseUserForm();
-        
+
         // Re-render component
         await InvokeAsync(StateHasChanged);
     }

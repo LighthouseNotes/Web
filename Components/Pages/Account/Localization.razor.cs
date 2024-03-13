@@ -43,11 +43,12 @@ public class LocalizationBase : ComponentBase
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // If settings is null the get the settings
-        if (_settings.Auth0UserId == null || _settings.OrganizationId == null || _settings.UserId == null || _settings.S3Endpoint == null)
+        if (_settings.Auth0UserId == null || _settings.OrganizationId == null || _settings.UserId == null ||
+            _settings.S3Endpoint == null)
         {
             // Use the setting service to retrieve the settings
             _settings = await SettingsService.Get();
-            
+
             // Set model from settings 
             Model.TimeZone = TimeZoneInfo.FindSystemTimeZoneById(_settings.TimeZone);
             Model.Culture = CultureInfo.CurrentCulture;

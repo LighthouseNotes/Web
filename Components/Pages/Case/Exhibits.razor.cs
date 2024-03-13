@@ -19,7 +19,7 @@ public class ExhibitsBase : ComponentBase
     protected API.Case SCase = null!;
     protected AddExhibit Model = new();
     protected Settings Settings = new();
-    protected MudDataGrid<API.Exhibit> ExhibitsTable = null!; 
+    protected MudDataGrid<API.Exhibit> ExhibitsTable = null!;
 
     // Class variables
     private readonly ReadOnlyCollection<TimeZoneInfo> _timeZones = TimeZoneInfo.GetSystemTimeZones();
@@ -31,7 +31,7 @@ public class ExhibitsBase : ComponentBase
 
         [Required] public string Description { get; set; } = null!;
 
-        [Required] public DateTime? DateSeizedProduced { get; set; } 
+        [Required] public DateTime? DateSeizedProduced { get; set; }
 
         [Required] public TimeSpan? TimeSeizedProduced { get; set; }
 
@@ -56,40 +56,42 @@ public class ExhibitsBase : ComponentBase
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // If settings is null the get the settings
-        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null || Settings.S3Endpoint == null)
+        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
+            Settings.S3Endpoint == null)
         {
             // Use the setting service to retrieve the settings
             Settings = await SettingsService.Get();
-            
+
             Model.TimeZone = TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone);
-            
+
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
     }
-    
+
     protected async Task<GridData<API.Exhibit>> LoadGridData(GridState<API.Exhibit> state)
     {
         // Create sort string
         string sortString = "";
-        
+
         // If sort definition is set then set sort string
-        if(state.SortDefinitions.Count == 1)
-        {
+        if (state.SortDefinitions.Count == 1)
             // if descending is true then column-name desc else column-name asc
-            sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
-        }
-        
+            sortString = state.SortDefinitions.First().Descending
+                ? $"{state.SortDefinitions.First().SortBy} desc"
+                : $"{state.SortDefinitions.First().SortBy} asc";
+
         // Fetch cases from API
-        (API.Pagination, List<API.Exhibit>?) exhibits = await LighthouseNotesAPIGet.Exhibits(CaseId, state.Page + 1, state.PageSize, sortString);
-        
+        (API.Pagination, List<API.Exhibit>?) exhibits =
+            await LighthouseNotesAPIGet.Exhibits(CaseId, state.Page + 1, state.PageSize, sortString);
+
         // Create grid data
         GridData<API.Exhibit> data = new()
         {
             Items = exhibits.Item2!,
-            TotalItems =exhibits.Item1.Total
+            TotalItems = exhibits.Item1.Total
         };
-        
+
         // Return grid data
         return data;
     }
@@ -126,7 +128,7 @@ public class ExhibitsBase : ComponentBase
 
         // Clear the form fields
         Model = new AddExhibit();
-        
+
         // Re-render component
         await InvokeAsync(StateHasChanged);
 
@@ -137,6 +139,8 @@ public class ExhibitsBase : ComponentBase
     protected Task<IEnumerable<TimeZoneInfo>> TimeZoneSearch(string value)
     {
         // If text is null or empty, show complete list else return match for timezone 
-        return Task.FromResult(string.IsNullOrEmpty(value) ? _timeZones : _timeZones.Where(x => x.DisplayName.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
+        return Task.FromResult(string.IsNullOrEmpty(value)
+            ? _timeZones
+            : _timeZones.Where(x => x.DisplayName.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
     }
 }

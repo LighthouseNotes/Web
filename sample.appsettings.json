@@ -7,7 +7,7 @@
       "ClientId": "",
       "ClientSecret": ""
     },
-    "Management" : {
+    "Management": {
       "Audience": "https://api.example.com",
       "ClientId": "",
       "ClientSecret": ""

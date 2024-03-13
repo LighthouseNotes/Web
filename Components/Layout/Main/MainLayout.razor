@@ -42,7 +42,7 @@
                 <MudGrid Justify="Justify.SpaceBetween">
                     <MudItem sm="12" md="6" xl="4">
                         <MudText> Lighthouse Notes <b> Web </b> </MudText>
-                        <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse Notes  </MudText>   
+                        <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse Notes </MudText>
                     </MudItem>
                     <MudItem sm="12" md="6" xl="4">
                         <MudText>
@@ -53,30 +53,30 @@
                         </MudText>
                     </MudItem>
                 </MudGrid>
-                   
+
             </footer>
         </MudHidden>
         <MudHidden Breakpoint="Breakpoint.MdAndUp">
-                 <footer class="d-flex justify-center flex-grow-1 mt-4 pa-4">
-                        <MudGrid Justify="Justify.SpaceBetween">
-                            <MudItem sm="12" md="6" xl="4">
-                                <MudText> Lighthouse Notes <b> Web </b> </MudText>
-                                <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse Notes  </MudText>   
-                            </MudItem>
-                            <MudItem sm="12" md="6" xl="4">
-                                <MudText>
-                                    Lighthouse Notes is a source available digital forensics note taking application.
-                                </MudText>
-                                <MudText>
-                                    <MudLink Href="https://github.com/LighthouseNotes/Web"> Web app source code </MudLink> | <MudLink Href="https://github.com/LighthouseNotes/Server"> Server source code </MudLink> |<MudLink Href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 Licence </MudLink> | <MudLink Href="https://github.com/bxdavies"> Developed by Ben </MudLink>
-                                </MudText>
-                            </MudItem>
-                        </MudGrid>
-                       
-                    </footer>
-            </MudHidden>
+            <footer class="d-flex justify-center flex-grow-1 mt-4 pa-4">
+                <MudGrid Justify="Justify.SpaceBetween">
+                    <MudItem sm="12" md="6" xl="4">
+                        <MudText> Lighthouse Notes <b> Web </b> </MudText>
+                        <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse Notes </MudText>
+                    </MudItem>
+                    <MudItem sm="12" md="6" xl="4">
+                        <MudText>
+                            Lighthouse Notes is a source available digital forensics note taking application.
+                        </MudText>
+                        <MudText>
+                            <MudLink Href="https://github.com/LighthouseNotes/Web"> Web app source code </MudLink> | <MudLink Href="https://github.com/LighthouseNotes/Server"> Server source code </MudLink> |<MudLink Href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 Licence </MudLink> | <MudLink Href="https://github.com/bxdavies"> Developed by Ben </MudLink>
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+
+            </footer>
+        </MudHidden>
     </MudBreakpointProvider>
-   
+
 </MudLayout>
 
 @code {
@@ -109,13 +109,11 @@
         {
             _footerAnimation = "footer-in";
             _footerMargin = _lighthouseNotesTheme.LayoutProperties.DrawerWidthLeft;
-            
         }
         else
         {
             _footerAnimation = "";
             _footerMargin = "0px";
-            
         }
     }
 
@@ -148,14 +146,12 @@
                 _drawerOpen = true;
                 _footerAnimation = "footer-in";
                 _footerMargin = _lighthouseNotesTheme.LayoutProperties.DrawerWidthLeft;
-                
             }
             else
             {
                 _drawerOpen = false;
                 _footerAnimation = "";
                 _footerMargin = "0px";
-               
             }
 
             // Set dark mode to true / false based on system preference

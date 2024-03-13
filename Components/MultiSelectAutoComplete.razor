@@ -4,36 +4,30 @@
 <div>
     <MudAutocomplete T="@T" @bind-Value="TheValue" SearchFunc="SearchFunc"
                      Label="@Label" Clearable="true" Immediate="false"
-                    CoerceValue="true"  
+                     CoerceValue="true"
                      ToStringFunc="@GetNameFunc" HelperText="@HelperText"/>
-    
+
 
     <MudChipSet AllClosable="true" OnClose="@RemoveValue">
         @foreach (T val in _selectedValues)
         {
-            <MudChip Size=Size.Small  Text="@GetNameFunc(val)" />
+            <MudChip Size=Size.Small Text="@GetNameFunc(val)"/>
         }
     </MudChipSet>
 </div>
 
 @code {
-    [Parameter]
-    public IEnumerable<T>? Values { get; set; }
-    
-    [Parameter]
-    public EventCallback<IEnumerable<T>> ValuesChanged { get; set; }
- 
-    [Parameter]
-    public string Label { get; set; } = null!;
+    [Parameter] public IEnumerable<T>? Values { get; set; }
 
-    [Parameter]
-    public string HelperText { get; set; }  = null!;
- 
-    [Parameter, EditorRequired]
-    public Func<string, Task<IEnumerable<T>>> SearchFunc { get; set; } = null!;
+    [Parameter] public EventCallback<IEnumerable<T>> ValuesChanged { get; set; }
 
-    [Parameter, EditorRequired]
-    public Func<T, string> GetNameFunc { get; set; } = null!;
+    [Parameter] public string Label { get; set; } = null!;
+
+    [Parameter] public string HelperText { get; set; } = null!;
+
+    [Parameter] [EditorRequired] public Func<string, Task<IEnumerable<T>>> SearchFunc { get; set; } = null!;
+
+    [Parameter] [EditorRequired] public Func<T, string> GetNameFunc { get; set; } = null!;
 
     //[Parameter, EditorRequired]
     //public Func<T, string> GetIdFunc { get; set; }
@@ -44,11 +38,11 @@
     {
         base.OnParametersSet();
 
-        if (Values == null )
+        if (Values == null)
         {
             _selectedValues.Clear();
         }
-        else if( ! Values.SequenceEqual( _selectedValues ))
+        else if (!Values.SequenceEqual(_selectedValues))
         {
             _selectedValues = Values.ToHashSet();
             ValuesChanged.InvokeAsync(Values);
@@ -61,7 +55,7 @@
         ValuesChanged.InvokeAsync(Values);
         StateHasChanged();
     }
- 
+
     private void RemoveValue(MudChip chip)
     {
         if (_selectedValues.RemoveWhere(x => GetNameFunc(x) == chip.Text) > 0)
@@ -86,4 +80,5 @@
         get => default!;
         set => AddValue(value);
     }
+
 }

@@ -9,7 +9,7 @@
 
     <MudText Typo="Typo.h1" Align="Align.Center"> Audit Log </MudText>
 
-    <MudDataGrid T="Models.API.UserAudit" ServerData="LoadGridData">
+    <MudDataGrid T="API.UserAudit" ServerData="LoadGridData">
         <Columns>
             <PropertyColumn Property="x => x.DateTime" Culture="CultureInfo.CurrentCulture" Format="@Settings.DateTimeFormat"/>
             <PropertyColumn Property="x => x.Action"/>

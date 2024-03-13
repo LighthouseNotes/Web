@@ -8,59 +8,59 @@
 
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <base href="~/" />
-        <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
-        
-        @* Google Fonts *@
-       <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-        
-        @* MudBlazor *@
-        <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
-        
-        @* Syncfusion *@
-        <link id="theme" href="_content/Syncfusion.Blazor.Themes/material.css" rel="stylesheet" />
-        
-        @* Custom CSS *@
-        <link href="css/site.css" rel="stylesheet" />
-        
-        <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
-    </head>
-    <body>
-      @* Create object tokens with AccessToken, RefreshToken and XsrfToken *@
-        @{
-            InitialApplicationState tokens = new ()
-            {
-                AccessToken = await HttpContext.GetTokenAsync("access_token"),
-                RefreshToken = await HttpContext.GetTokenAsync("refresh_token"),
-                XsrfToken = Xsrf.GetAndStoreTokens(HttpContext).RequestToken
-            };
-        }
-        <component type="typeof(App)" render-mode="ServerPrerendered" param-InitialState="tokens"/>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <base href="~/"/>
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
 
-        <div id="blazor-error-ui">
-            <environment include="Staging,Production">
-                An error has occurred. This application may no longer respond until reloaded.
-            </environment>
-            <environment include="Development">
-                An unhandled exception has occurred. See browser dev tools for details.
-            </environment>
-            <a href="" class="reload">Reload</a>
-            <a class="dismiss">🗙</a>
-        </div>
+    @* Google Fonts *@
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-        @* Blazor *@
-        <script src="_framework/blazor.server.js"></script>
+    @* MudBlazor *@
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet"/>
 
-        @* MudBlazor *@
-        <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    @* Syncfusion *@
+    <link id="theme" href="_content/Syncfusion.Blazor.Themes/material.css" rel="stylesheet"/>
 
-        @* Syncfusion *@
-        <script src="_content/Syncfusion.Blazor.Core/scripts/syncfusion-blazor.min.js" type="text/javascript"></script>
-    
-        @* Custom JS *@
-        <script src="js/functions.js"></script>
-    </body>
+    @* Custom CSS *@
+    <link href="css/site.css" rel="stylesheet"/>
+
+    <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered"/>
+</head>
+<body>
+@* Create object tokens with AccessToken, RefreshToken and XsrfToken *@
+@{
+    InitialApplicationState tokens = new()
+    {
+        AccessToken = await HttpContext.GetTokenAsync("access_token"),
+        RefreshToken = await HttpContext.GetTokenAsync("refresh_token"),
+        XsrfToken = Xsrf.GetAndStoreTokens(HttpContext).RequestToken
+    };
+}
+<component type="typeof(App)" render-mode="ServerPrerendered" param-InitialState="tokens"/>
+
+<div id="blazor-error-ui">
+    <environment include="Staging,Production">
+        An error has occurred. This application may no longer respond until reloaded.
+    </environment>
+    <environment include="Development">
+        An unhandled exception has occurred. See browser dev tools for details.
+    </environment>
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@* Blazor *@
+<script src="_framework/blazor.server.js"></script>
+
+@* MudBlazor *@
+<script src="_content/MudBlazor/MudBlazor.min.js"></script>
+
+@* Syncfusion *@
+<script src="_content/Syncfusion.Blazor.Core/scripts/syncfusion-blazor.min.js" type="text/javascript"></script>
+
+@* Custom JS *@
+<script src="js/functions.js"></script>
+</body>
 </html>

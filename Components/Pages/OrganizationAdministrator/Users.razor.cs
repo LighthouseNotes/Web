@@ -18,20 +18,20 @@ public class UsersBase : ComponentBase
     [Inject] private AuthenticationStateProvider AuthenticationState { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private IConfiguration Configuration { get; set; } = default!;
-    
+
     // Page variables
     protected string RoleSelectValue = "Nothing selected";
     protected string? SearchString;
     protected InviteUserForm Model = new();
     protected MudDataGrid<API.User> UsersTable = null!;
-    
+
     protected class InviteUserForm
     {
         [Required(AllowEmptyStrings = false)] public string EmailAddress { get; set; } = null!;
 
         public IEnumerable<string> Roles { get; set; } = new List<string> { "user" };
     }
-    
+
     protected async Task<GridData<API.User>> LoadGridData(GridState<API.User> state)
     {
         // Fetch cases from API
@@ -42,10 +42,12 @@ public class UsersBase : ComponentBase
             users = await LighthouseNotesAPIGet.Users(state.Page + 1, state.PageSize, search: SearchString);
         }
         // If sort definition is set then set sort string
-        else if(state.SortDefinitions.Count == 1)
+        else if (state.SortDefinitions.Count == 1)
         {
             // if descending is true then column-name desc else column-name asc
-            string sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
+            string sortString = state.SortDefinitions.First().Descending
+                ? $"{state.SortDefinitions.First().SortBy} desc"
+                : $"{state.SortDefinitions.First().SortBy} asc";
 
             // Fetch users from API
             users = await LighthouseNotesAPIGet.Users(state.Page + 1, state.PageSize, sortString);
@@ -55,14 +57,14 @@ public class UsersBase : ComponentBase
             // Fetch users from API
             users = await LighthouseNotesAPIGet.Users(state.Page + 1, state.PageSize);
         }
-        
+
         // Create grid data
         GridData<API.User> data = new()
         {
             Items = users.Item2,
             TotalItems = users.Item1.Total
         };
-        
+
         // Return grid data
         return data;
     }
@@ -70,9 +72,7 @@ public class UsersBase : ComponentBase
     protected async Task Search()
     {
         if (UsersTable.SortDefinitions.Count == 1)
-        {
             await UsersTable.RemoveSortAsync(UsersTable.SortDefinitions.First().Value.SortBy);
-        }
         await UsersTable.ReloadServerData();
     }
 
@@ -120,11 +120,13 @@ public class UsersBase : ComponentBase
             {
                 case "user":
                     newUserRoles.Add(Configuration["Auth0:Roles:user"] ??
-                                     throw new InvalidOperationException("Auth0:Roles:user not found in appsettings.json!"));
+                                     throw new InvalidOperationException(
+                                         "Auth0:Roles:user not found in appsettings.json!"));
                     break;
                 case "sio":
                     newUserRoles.Add(Configuration["Auth0:Roles:sio"] ??
-                                     throw new InvalidOperationException("Auth0:Roles:sio not found in appsettings.json!"));
+                                     throw new InvalidOperationException(
+                                         "Auth0:Roles:sio not found in appsettings.json!"));
                     break;
                 case "organization administrator":
                     newUserRoles.Add(Configuration["Auth0:Roles:organization-administrator"] ??
@@ -163,7 +165,7 @@ public class UsersBase : ComponentBase
         {
             // Delete the user
             await LighthouseNotesAPIDelete.User(userId);
-            
+
             // Notify the user
             Snackbar.Add("User deleted!", Severity.Success);
 
@@ -183,7 +185,7 @@ public class UsersBase : ComponentBase
 
         // Get organization id from JWT
         string? organizationId = authenticationState.User.Claims.FirstOrDefault(c => c.Type == "org_id")?.Value;
-        
+
         // Create a base list of roles
         List<string> roles = new()
         {
@@ -204,7 +206,7 @@ public class UsersBase : ComponentBase
 
         // Get current user
         API.User user = await LighthouseNotesAPIGet.User();
-        
+
         // Create invite
         await AuthOManagementClient.Organizations.CreateInvitationAsync(organizationId,
             new OrganizationCreateInvitationRequest
@@ -237,7 +239,7 @@ public class UsersBase : ComponentBase
 
         // Notify the user 
         Snackbar.Add("User has successfully been invited!", Severity.Success);
-        
+
         // Clear the form fields
         Model = new InviteUserForm();
 

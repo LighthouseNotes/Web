@@ -13,6 +13,7 @@ public class ConfigBase : ComponentBase
 
     // Page variables
     protected PageLoad? PageLoad;
+
     // ReSharper disable once FieldCanBeMadeReadOnly.Global
     protected SettingsForm Model = new();
 
@@ -48,7 +49,7 @@ public class ConfigBase : ComponentBase
         Model.S3SecretKey = _organizationSettings.S3SecretKey!;
         Model.MeilisearchUrl = _organizationSettings.MeilisearchUrl!;
         Model.MeilisearchApiKey = _organizationSettings.MeilisearchApiKey!;
-        
+
         // Mark page load as complete
         PageLoad?.LoadComplete();
     }
@@ -65,7 +66,9 @@ public class ConfigBase : ComponentBase
             S3AccessKey = Model.S3AccessKey != _organizationSettings.S3AccessKey ? Model.S3AccessKey : null,
             S3SecretKey = Model.S3SecretKey != _organizationSettings.S3SecretKey ? Model.S3SecretKey : null,
             MeilisearchUrl = Model.MeilisearchUrl != _organizationSettings.MeilisearchUrl ? Model.MeilisearchUrl : null,
-            MeilisearchApiKey = Model.MeilisearchApiKey != _organizationSettings.MeilisearchApiKey ? Model.MeilisearchApiKey : null
+            MeilisearchApiKey = Model.MeilisearchApiKey != _organizationSettings.MeilisearchApiKey
+                ? Model.MeilisearchApiKey
+                : null
         });
 
         // Notify the user

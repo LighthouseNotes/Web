@@ -40,9 +40,9 @@
                 <ToolBarContent>
                     <MudText Typo="Typo.h6"> Users </MudText>
                     <MudSpacer/>
-                    <MudTextField T="string" @bind-Value="SearchString" Placeholder="Search" Adornment="Adornment.Start" 
-                                                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" DebounceInterval="500" OnDebounceIntervalElapsed="@( () => Search())" Clearable="true">
-                   </MudTextField>
+                    <MudTextField T="string" @bind-Value="SearchString" Placeholder="Search" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" DebounceInterval="500" OnDebounceIntervalElapsed="@(() => Search())" Clearable="true">
+                    </MudTextField>
                 </ToolBarContent>
                 <Columns>
                     <PropertyColumn Property="x => x.DisplayName" Title="Display Name"/>
@@ -63,7 +63,6 @@
                                     {
                                         <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(role) </MudChip>
                                     }
-                                
                                 }
                             </MudChipSet >
                         </CellTemplate>
@@ -85,7 +84,7 @@
                     </TemplateColumn>
                 </Columns>
                 <PagerContent>
-                    <MudDataGridPager T="API.User" />
+                    <MudDataGridPager T="API.User"/>
                 </PagerContent>
             </MudDataGrid>
         </MudItem>

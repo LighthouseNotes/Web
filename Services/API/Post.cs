@@ -98,7 +98,7 @@ public class LighthouseNotesAPIPost
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
-    
+
     // POST: /case/?/contemporaneous-notes/search
     public async Task<List<ContemporaneousNotes>> ContemporaneousNotesSearch(string caseId, string searchQuery)
     {
@@ -111,7 +111,8 @@ public class LighthouseNotesAPIPost
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
-        request.Content = new StringContent(JsonSerializer.Serialize(new Search { Query = searchQuery }), Encoding.UTF8);
+        request.Content =
+            new StringContent(JsonSerializer.Serialize(new Search { Query = searchQuery }), Encoding.UTF8);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
         // Send request
@@ -155,9 +156,10 @@ public class LighthouseNotesAPIPost
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
-    
+
     // POST: /case/?/shared/contemporaneous-notes/search
-    public async Task<List<SharedContemporaneousNotes>> SharedContemporaneousNotesSearch(string caseId, string searchQuery)
+    public async Task<List<SharedContemporaneousNotes>> SharedContemporaneousNotesSearch(string caseId,
+        string searchQuery)
     {
         // Create request
         HttpRequestMessage request = new(HttpMethod.Post,
@@ -168,7 +170,8 @@ public class LighthouseNotesAPIPost
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
-        request.Content = new StringContent(JsonSerializer.Serialize(new Search { Query = searchQuery }), Encoding.UTF8);
+        request.Content =
+            new StringContent(JsonSerializer.Serialize(new Search { Query = searchQuery }), Encoding.UTF8);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
         // Send request

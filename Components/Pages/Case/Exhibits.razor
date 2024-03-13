@@ -88,7 +88,7 @@
     <MudText Typo="Typo.subtitle1" Align="Align.Center"> The table below details all exhibits added to the case. </MudText>
     <MudGrid>
         <MudItem xs="12">
-            <MudDataGrid @ref="@ExhibitsTable" T="Models.API.Exhibit"  ServerData="LoadGridData" SortMode="SortMode.Single">
+            <MudDataGrid @ref="@ExhibitsTable" T="Models.API.Exhibit" ServerData="LoadGridData" SortMode="SortMode.Single">
                 <Columns>
                     <PropertyColumn Property="x => x.Reference"/>
                     <PropertyColumn Property="x => x.Description"/>
@@ -102,7 +102,7 @@
                     </TemplateColumn>
                 </Columns>
                 <PagerContent>
-                     <MudDataGridPager T="API.Exhibit" />
+                    <MudDataGridPager T="API.Exhibit"/>
                 </PagerContent>
             </MudDataGrid>
         </MudItem>

@@ -19,7 +19,7 @@ public class SharedTabBase : ComponentBase
     [Inject] private ISettingsService SettingsService { get; set; } = default!;
 
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-    
+
     // API Objects
     protected API.SharedTab Tab = null!;
     protected API.Case SCase = null!;
@@ -49,7 +49,8 @@ public class SharedTabBase : ComponentBase
         _caseUsers = SCase.Users.ToList();
 
         // Get exhibits linked to case
-        (API.Pagination, List<API.Exhibit>?) exhibitsWithPagination = await LighthouseNotesAPIGet.Exhibits(CaseId, 1, 0);
+        (API.Pagination, List<API.Exhibit>?)
+            exhibitsWithPagination = await LighthouseNotesAPIGet.Exhibits(CaseId, 1, 0);
         _exhibits = exhibitsWithPagination.Item2!;
 
         // Get tab details
@@ -77,7 +78,7 @@ public class SharedTabBase : ComponentBase
         {
             // Use the setting service to retrieve the settings
             Settings = await SettingsService.Get();
-            
+
             // Set Image Path
             _imagePath =
                 $"{Settings.S3Endpoint}/cases/{CaseId}/shared/tabs/images/";

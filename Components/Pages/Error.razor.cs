@@ -23,7 +23,7 @@ public class ErrorBase : ComponentBase
     {
         // If status code is 404 Not Found or 403 Forbidden then return
         if (StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden) return;
-        
+
         // Check exception type 
         switch (Exception)
         {
@@ -34,13 +34,14 @@ public class ErrorBase : ComponentBase
                 try
                 {
                     Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent)!;
-                    Description = errorMessage?.Detail ?? System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+                    Description = errorMessage?.Detail ??
+                                  System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
                 }
                 catch
                 {
-                    Description =  System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+                    Description = System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
                 }
-                
+
                 break;
             }
             case HttpRequestException httpRequestException:
@@ -52,7 +53,7 @@ public class ErrorBase : ComponentBase
                 Description = Exception?.Message;
                 break;
         }
-        
+
         // If title is unauthorized check token expiry date time
         if (Title == "Unauthorized")
         {

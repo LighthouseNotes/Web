@@ -16,14 +16,15 @@ public class SettingsService : ISettingsService
     private NavigationManager _navigationManager;
     private AuthenticationStateProvider _authenticationState;
 
-    public SettingsService(ProtectedLocalStorage protectedLocalStorage, LighthouseNotesAPIGet lighthouseNotesAPIGet, NavigationManager navigationManager, AuthenticationStateProvider authenticationState)
+    public SettingsService(ProtectedLocalStorage protectedLocalStorage, LighthouseNotesAPIGet lighthouseNotesAPIGet,
+        NavigationManager navigationManager, AuthenticationStateProvider authenticationState)
     {
         _protectedLocalStore = protectedLocalStorage;
         _lighthouseNotesAPIGet = lighthouseNotesAPIGet;
         _navigationManager = navigationManager;
         _authenticationState = authenticationState;
     }
-    
+
     public async Task<Models.Settings> Get()
     {
         // Get user settings from browser storage
@@ -66,14 +67,13 @@ public class SettingsService : ISettingsService
         {
             // Set the user settings
             await Set();
-            
+
             // Get user settings from browser storage
             result = await _protectedLocalStore.GetAsync<Models.Settings>("settings");
         }
 
         Console.WriteLine(result.Value);
         return result.Value;
-
     }
 
     public async Task Set()

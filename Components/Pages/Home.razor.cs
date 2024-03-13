@@ -32,15 +32,15 @@ public class HomeBase : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         // Get SIO users from api
-        (Pagination, List<API.User>) usersWithPagination  = await LighthouseNotesAPIGet.Users(sio: true);
+        (Pagination, List<API.User>) usersWithPagination = await LighthouseNotesAPIGet.Users(sio: true);
         _sioUsers = usersWithPagination.Item2;
-        
+
         // Check if environment is development
         if (HostEnvironment.IsDevelopment()) DevelopmentMode = true;
-        
+
         // Fetch user details 
         User = await LighthouseNotesAPIGet.User();
-        
+
         // Mark page load as complete 
         PageLoad?.LoadComplete();
     }
@@ -49,11 +49,12 @@ public class HomeBase : ComponentBase
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // If settings is null the get the settings
-        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null || Settings.S3Endpoint == null)
+        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
+            Settings.S3Endpoint == null)
         {
             // Use the setting service to retrieve the settings
             Settings = await SettingsService.Get();
-            
+
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
@@ -69,10 +70,12 @@ public class HomeBase : ComponentBase
             cases = await LighthouseNotesAPIGet.Cases(state.Page + 1, state.PageSize, search: SearchString);
         }
         // If sort definition is set then set sort string
-        else if(state.SortDefinitions.Count == 1)
+        else if (state.SortDefinitions.Count == 1)
         {
             // if descending is true then column-name desc else column-name asc
-            string sortString = state.SortDefinitions.First().Descending ? $"{state.SortDefinitions.First().SortBy} desc" : $"{state.SortDefinitions.First().SortBy} asc";
+            string sortString = state.SortDefinitions.First().Descending
+                ? $"{state.SortDefinitions.First().SortBy} desc"
+                : $"{state.SortDefinitions.First().SortBy} asc";
 
             // Fetch cases from API
             cases = await LighthouseNotesAPIGet.Cases(state.Page + 1, state.PageSize, sortString);
@@ -81,14 +84,14 @@ public class HomeBase : ComponentBase
         {
             cases = await LighthouseNotesAPIGet.Cases(state.Page + 1, state.PageSize);
         }
-        
+
         // Create grid data
         GridData<API.Case> data = new()
         {
             Items = cases.Item2!,
             TotalItems = cases.Item1.Total
         };
-        
+
         // Return grid data
         return data;
     }
@@ -96,12 +99,10 @@ public class HomeBase : ComponentBase
     protected async Task Search()
     {
         if (CasesTable.SortDefinitions.Count == 1)
-        {
             await CasesTable.RemoveSortAsync(CasesTable.SortDefinitions.First().Value.SortBy);
-        }
         await CasesTable.ReloadServerData();
     }
-    
+
     // SIO user search function - searches by given name or last name
     protected async Task<IEnumerable<API.User>> SIOUserSearchFunc(string search)
     {
@@ -110,7 +111,7 @@ public class HomeBase : ComponentBase
             x.GivenName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
             x.LastName.Contains(search, StringComparison.OrdinalIgnoreCase)));
     }
-    
+
     // Case item edit committed 
     protected async Task CommittedItemChanges(API.Case item)
     {

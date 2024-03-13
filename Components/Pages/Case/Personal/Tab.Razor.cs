@@ -11,7 +11,7 @@ public class TabBase : ComponentBase
     [Inject] private IDialogService Dialog { get; set; } = default!;
     [Inject] private IConfiguration Configuration { get; set; } = default!;
     [Inject] private ISettingsService SettingsService { get; set; } = default!;
-    
+
     // API Objects
     protected API.Tab Tab = null!;
     protected API.Case SCase = null!;
@@ -41,7 +41,8 @@ public class TabBase : ComponentBase
         _caseUsers = SCase.Users.ToList();
 
         // Get exhibits linked to case
-        (API.Pagination, List<API.Exhibit>?) exhibitsWithPagination = await LighthouseNotesAPIGet.Exhibits(CaseId, 1, 0);
+        (API.Pagination, List<API.Exhibit>?)
+            exhibitsWithPagination = await LighthouseNotesAPIGet.Exhibits(CaseId, 1, 0);
         _exhibits = exhibitsWithPagination.Item2!;
 
         // Get tab details
@@ -69,11 +70,11 @@ public class TabBase : ComponentBase
         {
             // Use the setting service to retrieve the settings
             Settings = await SettingsService.Get();
-            
+
             // Set Image Path
             _imagePath =
                 $"{Settings.S3Endpoint}/cases/{CaseId}/{Settings.UserId}/contemporaneous-notes/images/";
-            
+
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }

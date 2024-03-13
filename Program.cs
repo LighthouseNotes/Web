@@ -8,7 +8,7 @@ using Syncfusion.Blazor;
 using System.Security.Cryptography.X509Certificates;
 
 // Version and copyright message
-Console.ForegroundColor = ConsoleColor.Cyan; 
+Console.ForegroundColor = ConsoleColor.Cyan;
 Console.WriteLine("Lighthouse Notes Web");
 Console.WriteLine(Assembly.GetEntryAssembly()!.GetName().Version?.ToString(3));
 Console.WriteLine();

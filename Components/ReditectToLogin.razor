@@ -8,7 +8,7 @@
     protected override void OnAfterRender(bool firstRender)
     {
         if (!firstRender) return;
-        
+
         // Get current url as an escaped string
         _currentUrl = Uri.EscapeDataString(new Uri(NavigationManager.Uri)
             .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped));
@@ -19,4 +19,5 @@
         // Navigate to the login URL
         NavigationManager.NavigateTo(_loginUrl, true);
     }
+
 }

@@ -16,10 +16,9 @@
             <ErrorImage StatusCode="403"></ErrorImage>
         </div>
     </div>
-    
 }
 @* 404 Not found *@
-else if(StatusCode == HttpStatusCode.NotFound)
+else if (StatusCode == HttpStatusCode.NotFound)
 {
     <PageTitle> Not Found </PageTitle>
     <div class="d-flex justify-center ">
@@ -53,12 +52,11 @@ else
     <PageTitle> Error </PageTitle>
     <div class="d-flex justify-center ">
         <div>
-             <MudText Typo="Typo.h1"> @Title </MudText>
-             <MudText> @Description </MudText>
+            <MudText Typo="Typo.h1"> @Title </MudText>
+            <MudText> @Description </MudText>
         </div>
         <div class="picture">
             <ErrorImage StatusCode="@((int)StatusCode)"></ErrorImage>
         </div>
     </div>
-
 }
