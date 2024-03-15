@@ -34,7 +34,7 @@ public class ErrorBase : ComponentBase
                 try
                 {
                     Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent)!;
-                    Description = errorMessage?.Detail ??
+                    Description = errorMessage.Detail ??
                                   System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
                 }
                 catch

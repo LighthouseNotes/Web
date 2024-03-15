@@ -46,6 +46,15 @@ public class LocalizationBase : ComponentBase
         if (_settings.Auth0UserId == null || _settings.OrganizationId == null || _settings.UserId == null ||
             _settings.S3Endpoint == null)
         {
+            // Get the settings redirect url
+            string? settingsRedirect = await SettingsService.CheckOrSet();
+            
+            // If the settings redirect url is not null then redirect 
+            if (settingsRedirect != null)
+            {
+                NavigationManager.NavigateTo(settingsRedirect, true);
+            }
+            
             // Use the setting service to retrieve the settings
             _settings = await SettingsService.Get();
 

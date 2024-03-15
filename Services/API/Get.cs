@@ -116,7 +116,7 @@ public class LighthouseNotesAPIGet
     }
 
     // GET: /user/?/settings
-    public async Task<Settings?> UserSettings()
+    public async Task<Settings> UserSettings()
     {
         // Create request
         HttpRequestMessage request = new(HttpMethod.Get, "user/settings");
@@ -127,11 +127,7 @@ public class LighthouseNotesAPIGet
 
         // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
-
-        // If response is 404
-        if (response.StatusCode == HttpStatusCode.NotFound)
-            return null;
-
+        
         // If response is not a success status code, throw exception
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);

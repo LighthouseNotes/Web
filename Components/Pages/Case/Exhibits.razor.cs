@@ -13,6 +13,7 @@ public class ExhibitsBase : ComponentBase
     [Inject] private LighthouseNotesAPIPost LighthouseNotesAPIPost { get; set; } = default!;
     [Inject] private ISettingsService SettingsService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
     // Page variables
     protected PageLoad? PageLoad;
@@ -59,6 +60,15 @@ public class ExhibitsBase : ComponentBase
         if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
             Settings.S3Endpoint == null)
         {
+            // Get the settings redirect url
+            string? settingsRedirect = await SettingsService.CheckOrSet();
+            
+            // If the settings redirect url is not null then redirect 
+            if (settingsRedirect != null)
+            {
+                NavigationManager.NavigateTo(settingsRedirect, true);
+            }
+            
             // Use the setting service to retrieve the settings
             Settings = await SettingsService.Get();
 

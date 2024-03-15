@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MudBlazor;
 
 namespace Web.Components.Pages.Case;
@@ -11,10 +10,10 @@ public class CaseBase : ComponentBase
     [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
     [Inject] private LighthouseNotesAPIPut LighthouseNotesAPIPut { get; set; } = default!;
     [Inject] private LighthouseNotesAPIDelete LighthouseNotesAPIDelete { get; set; } = default!;
-    [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private ISettingsService SettingsService { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
     // Page variables
     protected API.Case SCase = null!;
@@ -54,6 +53,15 @@ public class CaseBase : ComponentBase
         if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
             Settings.S3Endpoint == null)
         {
+            // Get the settings redirect url
+            string? settingsRedirect = await SettingsService.CheckOrSet();
+            
+            // If the settings redirect url is not null then redirect 
+            if (settingsRedirect != null)
+            {
+                NavigationManager.NavigateTo(settingsRedirect, true);
+            }
+            
             // Use the setting service to retrieve the settings
             Settings = await SettingsService.Get();
 
