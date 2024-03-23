@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 using MudBlazor.Services;
 using Syncfusion.Blazor;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.DataProtection;
+using StackExchange.Redis;
 
 // Version and copyright message
 Console.ForegroundColor = ConsoleColor.Cyan;
@@ -29,6 +31,16 @@ builder.Services.AddControllers();
 builder.Services.AddRazorPages(options => { options.RootDirectory = "/Components"; });
 builder.Services.AddServerSideBlazor();
 
+// Use Redis for key storage if running in production
+if (builder.Environment.IsProduction())
+{
+    ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis") ??
+                                                                throw new InvalidOperationException(
+                                                                    "Connection string 'Redis' not found in appssettings.json or environment variable!"));
+    builder.Services.AddDataProtection()
+        .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys");
+}
+
 // Add certificate forwarding for Nginx reverse proxy 
 builder.Services.AddCertificateForwarding(options =>
 {
@@ -51,9 +63,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddAuth0WebAppAuthentication(options =>
 {
     options.Domain = builder.Configuration["Auth0:Domain"] ??
-                     throw new InvalidOperationException("Auth0:Domain not found in appsettings.json!");
+                     throw new InvalidOperationException("Auth0:Domain not found in appsettings.json or environment variable!");
     options.ClientId = builder.Configuration["Auth0:Auth:ClientId"] ??
-                       throw new InvalidOperationException("Auth0:Auth:ClientId not found in appsettings.json!");
+                       throw new InvalidOperationException("Auth0:Auth:ClientId not found in appsettings.json or environment variable!");
     options.ClientSecret = builder.Configuration["Auth0:Auth:ClientSecret"];
 }).WithAccessToken(options =>
 {
@@ -65,7 +77,7 @@ builder.Services.AddAuth0WebAppAuthentication(options =>
 builder.Services.AddAuth0AuthenticationClient(config =>
 {
     config.Domain = builder.Configuration["Auth0:Domain"] ??
-                    throw new InvalidOperationException("Auth0:Domain not found in appsettings.json!");
+                    throw new InvalidOperationException("Auth0:Domain not found in appsettings.json or environment variable!");
     config.ClientId = builder.Configuration["Auth0:Management:ClientId"];
     config.ClientSecret = builder.Configuration["Auth0:Management:ClientSecret"];
 });
