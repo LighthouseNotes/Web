@@ -39,4 +39,4 @@ Lighthouse is a university dissertation project which implements a source availa
 - Localization settings
 - Audit log
 
-*This repository holds the source code and builds for the Blazor web app part of the application.* 
+**This repository holds the source code and builds for the Blazor web app part of the application.** 
