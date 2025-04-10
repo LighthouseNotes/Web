@@ -3,9 +3,9 @@
 public class LighthouseNotesAPIDelete
 {
     private readonly HttpClient _http;
-    private readonly TokenProvider _tokenProvider;
+    private readonly TokenService _tokenService;
 
-    public LighthouseNotesAPIDelete(IHttpClientFactory clientFactory, TokenProvider tokenProvider,
+    public LighthouseNotesAPIDelete(IHttpClientFactory clientFactory, TokenService tokenService,
         IConfiguration configuration)
     {
         // Create http client
@@ -15,7 +15,7 @@ public class LighthouseNotesAPIDelete
         _http.BaseAddress = new Uri($"{configuration["LighthouseNotesApiUrl"]}/");
 
         // Set token provider
-        _tokenProvider = tokenProvider;
+        _tokenService = tokenService;
     }
 
     // DELETE: /user/?
@@ -25,7 +25,7 @@ public class LighthouseNotesAPIDelete
         HttpRequestMessage request = new(HttpMethod.Delete, $"/user/{userId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -43,7 +43,7 @@ public class LighthouseNotesAPIDelete
         HttpRequestMessage request = new(HttpMethod.Delete, $"/case/{caseId}/user/{userId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request

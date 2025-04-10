@@ -1,6 +1,6 @@
 ﻿@page "/case/{caseId}/exhibit/{exhibitId}"
 @inherits ExhibitBase
-@attribute [Authorize(Roles = "user")]
+@attribute [Authorize]
 
 <PageLoad @ref="PageLoad">
     <PageTitle> @Exhibit.Reference </PageTitle>
@@ -22,7 +22,8 @@
                         <b> Where Seized / Produced: </b> @Exhibit.WhereSeizedProduced
                     </MudText>
                     <MudText>
-                        <b> Date Time Seized / Produced: </b> @Exhibit.DateTimeSeizedProduced.ToString(Settings.DateTimeFormat)
+                        <b> Date Time Seized /
+                            Produced: </b> @Exhibit.DateTimeSeizedProduced.ToString(Settings.DateTimeFormat)
                     </MudText>
                     <MudText>
                         <b> Seized / Produced by: </b> @Exhibit.SeizedBy

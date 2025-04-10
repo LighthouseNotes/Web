@@ -1,18 +1,21 @@
 ﻿@page "/case/{caseId}/tab/{TabId}"
 @inherits TabBase
-@attribute [Authorize(Roles = "user")]
+@attribute [Authorize]
 
 <PageLoad @ref="@PageLoad">
     <PageTitle> @SCase.DisplayName - @Tab.Name </PageTitle>
     <MudText Typo="Typo.h1" Align="Align.Center"> @Tab.Name </MudText>
-    <MudText Typo="Typo.subtitle1" Align="Align.Center"> Created: @Tab.Created.ToString(Settings.DateTimeFormat) </MudText>
+    <MudText Typo="Typo.subtitle1" Align="Align.Center">
+        Created: @Tab.Created.ToString(Settings.DateTimeFormat) </MudText>
     <MudStack>
 
 
         @* Toggle mentions button and save button *@
         <div class="mx-3 d-flex justify-end flex-grow-1 gap-4">
             <MudToolBar>
-                <MudButton OnClick="@OpenRichTextEditor" StartIcon="@Icons.Material.Filled.EditNote" Color="Color.Primary" Variant="Variant.Filled" Class="my-3"> Edit Content </MudButton>
+                <MudButton OnClick="@OpenRichTextEditor" StartIcon="@Icons.Material.Filled.EditNote"
+                           Color="Color.Primary" Variant="Variant.Filled" Class="my-3"> Edit Content
+                </MudButton>
             </MudToolBar>
         </div>
 
@@ -30,10 +33,13 @@
                         <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Style="font-size: 4rem;"/>
                     </div>
                     <div Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
-                        <MudText Align="Align.Center" Typo="Typo.h3">The tab does not have any content to display! </MudText>
+                        <MudText Align="Align.Center" Typo="Typo.h3">The tab does not have any content to display!
+                        </MudText>
                     </div>
                     <div Class="d-flex justify-center flex-grow-1 gap-4" Elevation="0">
-                        <MudText Align="Align.Center" Typo="Typo.caption"> Please use the 'Edit Content' button above to add content. </MudText>
+                        <MudText Align="Align.Center" Typo="Typo.caption"> Please use the 'Edit Content' button above to
+                            add content.
+                        </MudText>
                     </div>
                 </MudStack>
             }

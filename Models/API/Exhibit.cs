@@ -10,6 +10,7 @@ public class Exhibit
     public required DateTime DateTimeSeizedProduced { get; init; }
     public required string WhereSeizedProduced { get; init; }
     public required string SeizedBy { get; init; }
+    public override string ToString() => Reference;
 }
 
 public class AddExhibit

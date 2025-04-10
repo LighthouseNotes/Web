@@ -1,43 +1,42 @@
-﻿using MudBlazor;
-using Web.Models;
-
-namespace Web.Components.Pages;
+﻿namespace Web.Components.Pages;
 
 public class AuditBase : ComponentBase
 {
-    [Inject] private LighthouseNotesAPIGet LighthouseNotesApiGet { get; set; } = default!;
-
-    [Inject] private ISettingsService SettingsService { get; set; } = default!;
-    
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-
     // Page variables
-    protected Settings Settings = new();
+    protected PageLoad? PageLoad;
+    protected Settings Settings = null!;
 
-    // Page rendered
+    // Component parameters and dependency injection
+    [Inject] private LighthouseNotesAPIGet LighthouseNotesApiGet { get; set; } = null!;
+
+    [Inject] private ISettingsService SettingsService { get; set; } = null!;
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+    //  Lifecycle method called after the component has rendered - get settings
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // If settings is null the get the settings
-        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
-            Settings.S3Endpoint == null)
-        {
-            // Get the settings redirect url
-            string? settingsRedirect = await SettingsService.CheckOrSet();
-            
-            // If the settings redirect url is not null then redirect 
-            if (settingsRedirect != null)
-            {
-                NavigationManager.NavigateTo(settingsRedirect, true);
-            }
-            
-            // Use the setting service to retrieve the settings
-            Settings = await SettingsService.Get();
+        // Call Check, Get or Set - to get the settings or a redirect url
+        (string?, Settings?) settingsCheckOrSetResult = await SettingsService.CheckGetOrSet();
 
-            // Re-render component
-            await InvokeAsync(StateHasChanged);
+        // If a redirect url is provided then use it
+        if (settingsCheckOrSetResult.Item1 != null)
+        {
+            NavigationManager.NavigateTo(settingsCheckOrSetResult.Item1, true);
+            return;
         }
+
+        // Set settings to the result
+        Settings = settingsCheckOrSetResult.Item2!;
+
+        // Mark page load as complete
+        PageLoad?.LoadComplete();
+
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
     }
 
+    // Load data grid
     protected async Task<GridData<API.UserAudit>> LoadGridData(GridState<API.UserAudit> state)
     {
         // Fetch cases from API

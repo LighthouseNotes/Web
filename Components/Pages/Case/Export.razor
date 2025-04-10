@@ -1,0 +1,185 @@
+﻿@page "/case/{caseId}/export/"
+@layout ExportLayout
+@using Web.Components.Layout.Export
+@inherits ExportBase
+@attribute [Authorize]
+
+<PageLoad @ref="@PageLoad" MaxWidth="MaxWidth.Medium">
+    <MudGrid>
+        <MudItem xs="12" Style="height: 100vh">
+            <ExportHeader DisplayName="@Model.DisplayName" TimeZone="@Settings.TimeZone"/>
+
+            <MudGrid Justify="Justify.Center" Class="my-4">
+                <MudItem xs="12" class="d-flex justify-center flex-grow-1 gap-4">
+                    <MudImage Src="./img/logo.jpg" Alt="Logo" Height="400"/>
+                </MudItem>
+            </MudGrid>
+
+            <MudText Typo="Typo.h1" Align="Align.Center" Class="mb-2">Lighthouse Notes Case Export</MudText>
+            <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-1">For</MudText>
+            <MudText Typo="Typo.h1" Align="Align.Center">@Model.DisplayName</MudText>
+
+        </MudItem>
+        <div style="page-break-before: always;"></div>
+        <MudItem xs="12" Style="height: 100vh">
+            <ExportHeader DisplayName="@Model.DisplayName" TimeZone="@Settings.TimeZone"/>
+
+            <MudText Typo="Typo.h2" Align="Align.Center">Case overview</MudText>
+            <MudGrid Class="my-3" Justify="Justify.Center" Spacing="3">
+                <MudItem Xs="12" Sm="6" Md="4" Xxl="2">
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">Case</MudText>
+                                <MudText Typo="Typo.subtitle1">@Model.DisplayName</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText><b>ID:</b> 3</MudText>
+                            <MudText><b>Name:</b> New Notes</MudText>
+                            <MudText><b>Created:</b> @Model.Created</MudText>
+                            <MudText><b>Modified:</b> @Model.Modified</MudText>
+                            <MudText><b>Status:</b> @Model.Status</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem Xs="12" Sm="6" Md="5" Xxl="5">
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Size="Size.Medium" Variant="Variant.Filled" Class="mud-elevation-0">
+                                    <MudImage Src="@Model.LeadInvestigator.ProfilePicture"></MudImage>
+                                </MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6"> Lead Investigator</MudText>
+                                <MudText Typo="Typo.subtitle1">@Model.LeadInvestigator.DisplayName</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText><b>Given Name &amp; Last
+                                    Name:</b> @Model.LeadInvestigator.GivenName @Model.LeadInvestigator.LastName
+                            </MudText>
+                            <MudText><b>Email Address:</b> @Model.LeadInvestigator.EmailAddress</MudText>
+                            <MudText><b>Job Title:</b> @Model.LeadInvestigator.JobTitle</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+        <div style="page-break-before: always;"></div>
+        <MudItem xs="12" Style="height: 100vh">
+            <ExportHeader DisplayName="@Model.DisplayName" TimeZone="@Settings.TimeZone"/>
+
+            <MudText Typo="Typo.h2" Align="Align.Center">Users with access to the case</MudText>
+            <MudGrid Class="my-3" Spacing="3">
+                <MudItem Xs="12">
+                    <MudTable Items="@Model.Users">
+                        <HeaderContent>
+                            <MudTh><b>Display Name</b></MudTh>
+                            <MudTh><b>Organization</b></MudTh>
+                            <MudTh><b>Job Title</b></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Display Name">@context.DisplayName</MudTd>
+                            <MudTd DataLabel="Job Title">@context.JobTitle</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+        <div style="page-break-before: always;"></div>
+        <MudItem xs="12" Style="height: 100vh">
+            <ExportHeader DisplayName="@Model.DisplayName" TimeZone="@Settings.TimeZone"/>
+
+            <MudText Typo="Typo.h2" Align="Align.Center">Contemporaneous Notes</MudText>
+            <MudExpansionPanels>
+                @foreach (API.ContemporaneousNotesExport? note in Model.ContemporaneousNotes)
+                {
+                    <MudExpansionPanel Expanded="true">
+                        <TitleContent>
+                            <MudText Typo="Typo.h6">@note.DateTime</MudText>
+                        </TitleContent>
+                        <ChildContent>
+                            @((MarkupString)note.Content)
+                        </ChildContent>
+                    </MudExpansionPanel>
+                    @if (Model.ContemporaneousNotes.IndexOf(note) + 1 != Model.ContemporaneousNotes.Count)
+                    {
+                        <MudDivider Class="my-6" Color="Color.Primary"/>
+                    }
+                }
+            </MudExpansionPanels>
+
+        </MudItem>
+        <div style="page-break-before: always;"></div>
+        <MudItem xs="12" Style="height: 100vh">
+            <ExportHeader DisplayName="@Model.DisplayName" TimeZone="@Settings.TimeZone"/>
+
+            <MudText Typo="Typo.h2" Align="Align.Center">Tabs</MudText>
+            @foreach (API.TabExport tab in Model.Tabs)
+            {
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h2" Align="Align.Center">@tab.Name</MudText>
+                        @((MarkupString)tab.Content)
+                    </MudCardContent>
+                </MudCard>
+                @if (Model.Tabs.IndexOf(tab) + 1 != Model.Tabs.Count)
+                {
+                    <MudDivider Class="my-6" Color="Color.Primary"/>
+                }
+            }
+
+        </MudItem>
+        <div style="page-break-before: always;"></div>
+        <MudItem xs="12" Style="height: 100vh">
+            <ExportHeader DisplayName="@Model.DisplayName" TimeZone="@Settings.TimeZone"/>
+
+            <MudText Typo="Typo.h2" Align="Align.Center">Shared Contemporaneous Notes</MudText>
+            <MudExpansionPanels>
+                @foreach (API.SharedContemporaneousNotesExport? note in Model.SharedContemporaneousNotes)
+                {
+                    <MudExpansionPanel Expanded="true">
+                        <TitleContent>
+                            <MudStack Direction="Row" AlignItems="AlignItems.Center">
+                                <MudAvatar Image="@note.Creator.ProfilePicture" Size="Size.Medium"
+                                           Variant="Variant.Filled" Class="mud-elevation-0"/>
+                                <MudText Typo="Typo.h6">@note.Created</MudText>
+                            </MudStack>
+                        </TitleContent>
+                        <ChildContent>
+                            @((MarkupString)note.Content)
+                        </ChildContent>
+                    </MudExpansionPanel>
+                    @if (Model.SharedContemporaneousNotes.IndexOf(note) + 1 != Model.SharedContemporaneousNotes.Count)
+                    {
+                        <MudDivider Class="my-6" Color="Color.Primary"/>
+                    }
+                }
+            </MudExpansionPanels>
+        </MudItem>
+        <div style="page-break-before: always;"></div>
+        <MudItem xs="12" Style="height: 100vh">
+            <ExportHeader DisplayName="@Model.DisplayName" TimeZone="@Settings.TimeZone"/>
+
+            <MudText Typo="Typo.h2" Align="Align.Center">Shared Tabs</MudText>
+            @foreach (API.SharedTabExport? tab in Model.SharedTabs)
+            {
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h2" Align="Align.Center">@tab.Name</MudText>
+                        <MudText Typo="Typo.subtitle1" Align="Align.Center">Created at: @tab.Created by
+                            <MudLink Href="#">@tab.Creator.DisplayName</MudLink>
+                        </MudText>
+                        @((MarkupString)tab.Content)
+                    </MudCardContent>
+                </MudCard>
+                @if (Model.SharedTabs.IndexOf(tab) + 1 != Model.SharedTabs.Count)
+                {
+                    <MudDivider Class="my-6" Color="Color.Primary"/>
+                }
+            }
+        </MudItem>
+    </MudGrid>
+</PageLoad>

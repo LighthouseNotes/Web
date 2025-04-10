@@ -1,26 +1,10 @@
 {
   "AllowedHosts": "*",
-  "Auth0": {
-    "Domain": "example.auth0.com",
-    "Auth": {
-      "Audience": "https://api.example.com",
-      "ClientId": "",
-      "ClientSecret": ""
-    },
-    "Management": {
-      "Audience": "https://api.example.com",
-      "ClientId": "",
-      "ClientSecret": ""
-    },
-    "Roles": {
-      "user": "rol_?",
-      "sio": "rol_?",
-      "organization-administrator": "rol_?"
-    },
-    "ConnectionId": "con_?"
-  },
-  "Syncfusion": {
-    "LicenseKey": "License"
+  "Authentication":
+  {
+    "Authority": "https://idp.example.com/realms/master",
+    "ClientId": "lighthousenotes",
+    "ClientSecret": "changeme"
   },
   "Logging": {
     "LogLevel": {

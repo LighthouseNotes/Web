@@ -1,14 +1,14 @@
 ﻿@page "/case/{caseId}"
 @inherits CaseBase
-@attribute [Authorize(Roles = "user")]
+@attribute [Authorize]
 
 <PageLoad @ref="@PageLoad">
     @* Set page tile from case display name *@
     <PageTitle> @SCase.DisplayName </PageTitle>
 
-    <MudText Typo="Typo.h1" Align="Align.Center"> Case Overview </MudText>
+    <MudText Typo="Typo.h1" Align="Align.Center"> Case Overview</MudText>
 
-    @* Case details and SIO info cards *@
+    @* Case details and LeadInvestigator info cards *@
     <MudGrid class="my-3 justify-center">
 
         @* Case details *@
@@ -16,7 +16,7 @@
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6"> Case </MudText>
+                        <MudText Typo="Typo.h6"> Case</MudText>
                         <MudText Typo="Typo.subtitle1"> @SCase.DisplayName </MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
@@ -44,123 +44,116 @@
             </MudCard>
         </MudItem>
 
-        @* SIO info *@
+        @* LeadInvestigator info *@
         <MudItem xs="12" sm="6" md="5" xxl="5">
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderAvatar>
                         <MudAvatar>
-                            <MudImage Height="45" Src="@SCase.SIO.ProfilePicture" ObjectFit="ObjectFit.ScaleDown"></MudImage>
+                            <MudImage Height="45" Src="@SCase.LeadInvestigator.ProfilePicture"
+                                      ObjectFit="ObjectFit.ScaleDown"></MudImage>
                         </MudAvatar>
                     </CardHeaderAvatar>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6"> Senior Investigative Officer </MudText>
-                        <MudText Typo="Typo.subtitle1"> @SCase.SIO.DisplayName </MudText>
+                        <MudText Typo="Typo.h6"> Senior Investigative Officer</MudText>
+                        <MudText Typo="Typo.subtitle1"> @SCase.LeadInvestigator.DisplayName </MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
                     <MudText>
-                        <b> Given Name & Last Name: </b> @SCase.SIO.GivenName @SCase.SIO.LastName
+                        <b> Given Name & Last
+                            Name: </b> @SCase.LeadInvestigator.GivenName @SCase.LeadInvestigator.LastName
                     </MudText>
                     <MudText>
-                        <b> Email Address: </b> @SCase.SIO.EmailAddress
+                        <b> Email Address: </b> @SCase.LeadInvestigator.EmailAddress
                     </MudText>
                     <MudText>
-                        <b> Organization: </b> @SCase.SIO.Organization.DisplayName
-                    </MudText>
-                    <MudText>
-                        <b> Job Title: </b> @SCase.SIO.JobTitle
+                        <b> Job Title: </b> @SCase.LeadInvestigator.JobTitle
                     </MudText>
                 </MudCardContent>
             </MudCard>
         </MudItem>
     </MudGrid>
-
-    @* Users with access to the case *@
-    <MudText Typo="Typo.h2"> Users with access to the case </MudText>
-    <MudText Typo="Typo.subtitle1"> The table below lists all users with access to the case. </MudText>
-    <MudGrid class="my-3">
-        <MudItem xs="12">
-            <MudDataGrid T="API.User" Items="@SCase.Users" Filterable="true">
-                <Columns>
-                    <PropertyColumn Property="x => x.DisplayName" Title="Display Name"/>
-                    <PropertyColumn Property="x => x.Organization.DisplayName" Title="Organization" Hideable="true"/>
-                    <PropertyColumn Property="x => x.JobTitle" Title="Job Title"/>
-                    <TemplateColumn Title="Actions">
-                        <CellTemplate>
-                            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.PersonSearch" Color="Color.Primary" Href="@($"/user/{context.Item.Id}")"> More Details </MudButton>
-                            @if (Settings.UserId == SCase.SIO.Id)
-                            {
-                                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Delete" Color="Color.Warning" OnClick="@(() => DeleteClick(context.Item.Id))"> Delete </MudButton>
-                            }
-                            else
-                            {
-                                <AuthorizeView Roles="organization-administrator" Context="authContext">
-                                    <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Delete" Color="Color.Warning" OnClick="@(() => DeleteClick(context.Item.Id))"> Delete </MudButton>
-                                </AuthorizeView>
-                            }
-
-
-                        </CellTemplate>
-                    </TemplateColumn>
-                </Columns>
-            </MudDataGrid>
-        </MudItem>
-    </MudGrid>
-
-    @* If the user is SIO on the case show add users *@
-    @if (Settings.UserId == SCase.SIO.Id)
-    {
-        <MudText Typo="Typo.h2"> Add user(s) to the case </MudText>
-        <MudText Typo="Typo.subtitle1"> Use the form below to add users to the case. Select the user(s) to add and then click or tap 'Add'.</MudText>
+    <AuthorizeView Context="authContext">
+        @* Users with access to the case *@
+        <MudText Typo="Typo.h2"> Users with access to the case</MudText>
+        <MudText Typo="Typo.subtitle1"> The table below lists all users with access to the case.</MudText>
         <MudGrid class="my-3">
-            <MudItem xs="12" sm="6" md="5" xxl="5">
-                <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
-                    <DataAnnotationsValidator/>
-                    <MudCard>
-                        <MudCardContent>
-                            <MultiSelectAutoComplete T="API.User" @bind-Values="Model.Users"
-                                                     SearchFunc="UserSearchFunc" Label="Users to give access to the case"
-                                                     GetNameFunc="c => c.DisplayName"/>
-                        </MudCardContent>
-                        <MudCardActions>
-                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"> Add </MudButton>
-                        </MudCardActions>
-                    </MudCard>
-                </EditForm>
+            <MudItem xs="12">
+                <MudDataGrid T="API.User" Items="@SCase.Users" Filterable="true">
+                    <Columns>
+                        <PropertyColumn Property="x => x.DisplayName" Title="Display Name"/>
+                        <PropertyColumn Property="x => x.JobTitle" Title="Job Title"/>
+                        <TemplateColumn Title="Actions">
+                            <CellTemplate>
+                                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.PersonSearch"
+                                           Color="Color.Primary" Href="@($"/user/{context.Item.EmailAddress}")"> More
+                                    Details
+                                </MudButton>
+                                @if (SCase.LeadInvestigator.EmailAddress == authContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value)
+                                {
+                                    <MudButton Class="ml-2" Variant="Variant.Filled"
+                                               EndIcon="@Icons.Material.Filled.Delete" Color="Color.Warning"
+                                               OnClick="@(() => DeleteClick(context.Item.EmailAddress))"> Delete
+                                    </MudButton>
+                                }
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
             </MudItem>
         </MudGrid>
-    }
-    @* Else the user is has the role organization admin show add users *@
-    else
-    {
-        <AuthorizeView Roles="organization-administrator" Context="authContext">
-            <MudText Typo="Typo.h2"> Add user(s) to the case </MudText>
-            <MudText Typo="Typo.subtitle1"> Use the form below to add users to the case. Select the user(s) to add and then click or tap 'Add'.</MudText>
+
+
+        @* If the user is LeadInvestigator on the case show add users *@
+        @if (SCase.LeadInvestigator.EmailAddress == authContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value)
+        {
+            <MudText Typo="Typo.h2"> Add user(s) to the case</MudText>
+            <MudText Typo="Typo.subtitle1"> Use the form below to add users to the case. Select the user(s) to add and
+                then click or tap 'Add'.
+            </MudText>
             <MudGrid class="my-3">
                 <MudItem xs="12" sm="6" md="5" xxl="5">
                     <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
                         <DataAnnotationsValidator/>
                         <MudCard>
                             <MudCardContent>
-                                <MultiSelectAutoComplete T="API.User" @bind-Values="Model.Users"
-                                                         SearchFunc="UserSearchFunc" Label="Users to give access to the case"
-                                                         GetNameFunc="c => c.DisplayName"/>
+                                <MudAutocomplete Label="Users"
+                                                 @ref="CaseUsersAutoComplete"
+                                                 T="API.User"
+                                                 SearchFunc="@UserSearchFunc"
+                                                 ValueChanged="@UserSelected"
+                                                 OpenOnFocus="false"
+                                                 ToStringFunc="u => u?.DisplayName"
+                                                 Margin="Margin.Normal">
+                                </MudAutocomplete>
+                                @* Chips containing list of case users *@
+                                <MudChipSet T="API.User" AllClosable OnClose="UserRemoved">
+                                    @foreach (Web.Models.API.User user in Model.Users.OfType<Web.Models.API.User>())
+                                    {
+                                        <MudChip Value="@user" Text="@user.DisplayName"></MudChip>
+                                    }
+                                </MudChipSet>
                             </MudCardContent>
                             <MudCardActions>
-                                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"> Add </MudButton>
+                                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                                           Class="ml-auto"> Add
+                                </MudButton>
                             </MudCardActions>
                         </MudCard>
                     </EditForm>
                 </MudItem>
             </MudGrid>
-        </AuthorizeView>
-    }
-
-
-    <MudText Typo="Typo.h2"> Export </MudText>
-    <MudText Typo="Typo.subtitle1"> Click or tap the 'Export case' button to export all the case and all the tabs and contemporaneous notes to a PDF. </MudText>
-    <MudText Typo="Typo.subtitle2"> This will take a while, your browser will automatically download the PDF and if you want to you can navigate to another page. <b> Please make sure popups are allowed! </b> </MudText>
-    <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.ImportExport" Color="Color.Primary" @onclick="ExportClick"> Export Case </MudButton>
+        }
+    </AuthorizeView>
+    <MudText Typo="Typo.h2"> Export</MudText>
+    <MudText Typo="Typo.subtitle1"> Click or tap the 'Export case' button to export all the case and all the tabs and
+        contemporaneous notes to a PDF.
+    </MudText>
+    <MudText Typo="Typo.subtitle2"> This will take a while, your browser will automatically download the PDF and if you
+        want to you can navigate to another page. <b> Please make sure popups are allowed! </b></MudText>
+    <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.ImportExport" Color="Color.Primary"
+               @onclick="ExportClick"> Export Case
+    </MudButton>
 
 </PageLoad>

@@ -2,19 +2,20 @@
 
 public class UserBase : ComponentBase
 {
-    [Parameter] public required string UserId { get; set; }
-
-    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
-
-    // Variables
+    // Page variables
     protected PageLoad? PageLoad;
     protected API.User User = null!;
 
-    // On parameters set 
+    // Component parameters and dependency injection
+    [Parameter] public required string EmailAddress { get; set; }
+
+    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = null!;
+
+    // Lifecycle method triggered when parameters are set or changed - get user from API
     protected override async Task OnParametersSetAsync()
     {
         // Fetch user with the provided ID
-        User = await LighthouseNotesAPIGet.User(UserId);
+        User = await LighthouseNotesAPIGet.User(EmailAddress);
 
         // Mark page loaded
         PageLoad?.LoadComplete();

@@ -1,55 +1,74 @@
-﻿@using Theme = Web.Components.Layout.Theme
-@using System.Reflection
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
-@inject IJSRuntime JSRuntime
 
 <MudThemeProvider Theme="_lighthouseNotesTheme" @ref="@_mudThemeProvider" @bind-IsDarkMode="@_darkMode"/>
+<MudPopoverProvider/>
 <MudDialogProvider/>
 <MudSnackbarProvider/>
 
 <MudLayout>
     <div class="container">
+        @* App bar *@
         <MudAppBar Elevation="1">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => DrawerToggle())"/>
-            <MudImage Src="img/logo.png" Alt="Lighthouse Notes Logo" Class="rounded-lg" Height="60" Style="padding-right: 12px;"/>
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                           OnClick="@(() => DrawerToggle())"/>
+            <MudImage Src="img/logo.png" Alt="Lighthouse Notes Logo" Class="rounded-lg" Height="60"
+                      Style="padding-right: 12px;"/>
             <MudDivider Vertical="true"/>
             <MudIconButton Icon="@Icons.Material.Filled.Home" Color="Color.Inherit" OnClick="@HomeClick"/>
             <MudSpacer/>
-            <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight">
-                <MudMenuItem Icon="@Icons.Material.Filled.Map" Href="account/localization"> Localization </MudMenuItem>
-                <MudMenuItem Icon="@Icons.Material.Filled.ManageAccounts" Href="account/profile"> Profile </MudMenuItem>
+            <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit"
+                     AnchorOrigin="Origin.BottomRight">
+                <MudMenuItem Icon="@Icons.Material.Filled.Map" Href="account/localization"> Localization</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.ManageAccounts" Href="account/profile"> Profile</MudMenuItem>
                 <AuthorizeView>
                     <Authorized>
-                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Edge="Edge.End" Href="account/logout" ForceLoad="true"> Logout </MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Edge="Edge.End"
+                                     Href="auth/logout" ForceLoad="true"> Logout
+                        </MudMenuItem>
                     </Authorized>
                     <NotAuthorized>
-                        <MudMenuItem Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Edge="Edge.End" Href="@_loginUrl" ForceLoad="true"> Login </MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Edge="Edge.End"
+                                     Href="@_loginUrl" ForceLoad="true"> Login
+                        </MudMenuItem>
                     </NotAuthorized>
                 </AuthorizeView>
             </MudMenu>
         </MudAppBar>
+        @* Side bar *@
         <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
             <NavMenu @bind-ContainsItems="_navMenuContainsItems"/>
         </MudDrawer>
+        @* Main *@
         <MudMainContent>
             @Body
         </MudMainContent>
     </div>
+    @* Footer *@
     <MudBreakpointProvider>
         <MudHidden Breakpoint="Breakpoint.SmAndDown">
-            <footer class="d-flex justify-center flex-grow-1 mt-4 pa-4 @_footerAnimation" style="margin-left: @_footerMargin">
+            <footer class="d-flex justify-center flex-grow-1 mt-4 pa-4 @_footerAnimation"
+                    style="margin-left: @_footerMargin">
                 <MudGrid Justify="Justify.SpaceBetween">
                     <MudItem sm="12" md="6" xl="4">
-                        <MudText> Lighthouse Notes <b> Web </b> </MudText>
-                        <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse Notes </MudText>
+                        <MudText> Lighthouse Notes <b> Web </b></MudText>
+                        <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse
+                            Notes
+                        </MudText>
                     </MudItem>
                     <MudItem sm="12" md="6" xl="4">
                         <MudText>
                             Lighthouse Notes is a source available digital forensics note taking application.
                         </MudText>
                         <MudText>
-                            <MudLink Href="https://github.com/LighthouseNotes/Web"> Web app source code </MudLink> | <MudLink Href="https://github.com/LighthouseNotes/Server"> Server source code </MudLink> |<MudLink Href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 Licence </MudLink> | <MudLink Href="https://github.com/bxdavies"> Developed by Ben </MudLink>
+                            <MudLink Href="https://github.com/LighthouseNotes/Web"> Web app source code</MudLink>
+                            |
+                            <MudLink Href="https://github.com/LighthouseNotes/Server"> Server source code</MudLink>
+                            |
+                            <MudLink Href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 Licence
+                            </MudLink>
+                            |
+                            <MudLink Href="https://github.com/bxdavies"> Developed by Ben</MudLink>
                         </MudText>
                     </MudItem>
                 </MudGrid>
@@ -60,15 +79,24 @@
             <footer class="d-flex justify-center flex-grow-1 mt-4 pa-4">
                 <MudGrid Justify="Justify.SpaceBetween">
                     <MudItem sm="12" md="6" xl="4">
-                        <MudText> Lighthouse Notes <b> Web </b> </MudText>
-                        <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse Notes </MudText>
+                        <MudText> Lighthouse Notes <b> Web </b></MudText>
+                        <MudText Typo="Typo.subtitle2"> Version: @_version | (C) Copyright @DateTime.Now.Year Lighthouse
+                            Notes
+                        </MudText>
                     </MudItem>
                     <MudItem sm="12" md="6" xl="4">
                         <MudText>
                             Lighthouse Notes is a source available digital forensics note taking application.
                         </MudText>
                         <MudText>
-                            <MudLink Href="https://github.com/LighthouseNotes/Web"> Web app source code </MudLink> | <MudLink Href="https://github.com/LighthouseNotes/Server"> Server source code </MudLink> |<MudLink Href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 Licence </MudLink> | <MudLink Href="https://github.com/bxdavies"> Developed by Ben </MudLink>
+                            <MudLink Href="https://github.com/LighthouseNotes/Web"> Web app source code</MudLink>
+                            |
+                            <MudLink Href="https://github.com/LighthouseNotes/Server"> Server source code</MudLink>
+                            |
+                            <MudLink Href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 Licence
+                            </MudLink>
+                            |
+                            <MudLink Href="https://github.com/bxdavies"> Developed by Ben</MudLink>
                         </MudText>
                     </MudItem>
                 </MudGrid>
@@ -80,6 +108,7 @@
 </MudLayout>
 
 @code {
+    // Page variables
     private bool _navMenuContainsItems;
     private bool _drawerOpen;
     private bool _darkMode;
@@ -91,55 +120,31 @@
     private string _footerAnimation = "";
     private string _version = "0.0.0";
 
-    protected override void OnInitialized()
+    // Lifecycle method triggered when parameters are set or changed
+    protected override void OnParametersSet()
     {
         // Get current url as an escaped string
         _currentUrl = Uri.EscapeDataString(new Uri(NavigationManager.Uri)
             .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped));
 
+        if (_currentUrl.Contains("logout"))
+        {
+            _currentUrl = "/";
+        }
+
         // Create login url with redirect ulr to the current page
-        _loginUrl = $"/account/login?returnUrl={_currentUrl}";
+        _loginUrl = $"/auth/login?returnUrl={_currentUrl}";
     }
 
-    // Drawer toggle - toggle open / close drawer on button press
-    void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-        if (_drawerOpen)
-        {
-            _footerAnimation = "footer-in";
-            _footerMargin = _lighthouseNotesTheme.LayoutProperties.DrawerWidthLeft;
-        }
-        else
-        {
-            _footerAnimation = "";
-            _footerMargin = "0px";
-        }
-    }
-
-    // On system preference change - enable or disable dark mode based on preference
-    private async Task OnSystemPreferenceChanged(bool newValue)
-    {
-        // Set dark mode variable to new system preference
-        _darkMode = newValue;
-
-        // Re-render component
-        await InvokeAsync(StateHasChanged);
-    }
-
-    // Home click - navigate to / on button click
-    private void HomeClick()
-    {
-        NavigationManager.NavigateTo("");
-    }
-
-    // After page render
+    // Lifecycle method called after the component has rendered - get version, open nav menu, handle dark mode
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // If this is the first render
         if (firstRender)
         {
+            // Get application version from assembly version
             _version = Assembly.GetEntryAssembly()!.GetName().Version?.ToString(3) ?? "0.0.0";
+
             // If navigation menu contains items, open it.
             if (_navMenuContainsItems)
             {
@@ -160,20 +165,40 @@
             // Watch system preference for changes
             await _mudThemeProvider.WatchSystemPreference(OnSystemPreferenceChanged);
 
-            // If dark mode is enabled use material-dark for Syncfusion elements 
-            if (_darkMode)
-            {
-                await JSRuntime.InvokeVoidAsync("setTheme", "material-dark");
-            }
-            // Else dark mode is disabled so use material for Syncfusion elements 
-            else
-            {
-                await JSRuntime.InvokeVoidAsync("setTheme", "material");
-            }
-
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
     }
 
+    // Drawer toggle - toggle open / close drawer on button press
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+        if (_drawerOpen)
+        {
+            _footerAnimation = "footer-in";
+            _footerMargin = _lighthouseNotesTheme.LayoutProperties.DrawerWidthLeft;
+        }
+        else
+        {
+            _footerAnimation = "";
+            _footerMargin = "0px";
+        }
+    }
+
+    //  Lifecycle method triggered when system preference change - enable or disable dark mode based on preference
+    private async Task OnSystemPreferenceChanged(bool newValue)
+    {
+        // Set dark mode variable to new system preference
+        _darkMode = newValue;
+
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Home click - navigate to / on button click
+    private void HomeClick()
+    {
+        NavigationManager.NavigateTo("");
+    }
 }

@@ -1,0 +1,27 @@
+﻿@inherits SharedTabTextEditorDialogBase
+<MudDialog DisableSidePadding="true">
+    <DialogContent>
+        <MudContainer Style="max-height: 80vh; min-height: 40vh; overflow-y: scroll" MaxWidth="MaxWidth.ExtraLarge">
+
+            <MudText Typo="Typo.subtitle1"> Use the rich text editor below to create / edit this tabs content and then
+                click or tap 'Save'.
+            </MudText>
+            @* Rich text editor *@
+            <MudExRichTextEdit @ref="@TextEditor"
+                               Tools="Tools"
+                               Modules="Modules"
+                               EnableResize="true"
+                               CustomUploadFunc="OnUpload"
+                               Placeholder="Write your note here!">
+            </MudExRichTextEdit>
+        </MudContainer>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Primary"
+                   OnClick="@SaveContent"> Save & Exit
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="@Color.Warning" OnClick="@Cancel"> Exit</MudButton>
+    </DialogActions>
+
+</MudDialog>

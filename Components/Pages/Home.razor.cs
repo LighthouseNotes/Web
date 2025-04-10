@@ -1,80 +1,78 @@
-﻿using MudBlazor;
-using Web.Models.API;
-
-namespace Web.Components.Pages;
+﻿namespace Web.Components.Pages;
 
 public class HomeBase : ComponentBase
 {
-    [Inject] private TokenProvider TokenProvider { get; set; } = default!;
-
-    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
-
-    [Inject] private LighthouseNotesAPIPut LighthouseNotesAPIPut { get; set; } = default!;
-
-    [Inject] private IJSRuntime Js { get; set; } = default!;
-
-    [Inject] private IHostEnvironment HostEnvironment { get; set; } = default!;
-
-    [Inject] private ISettingsService SettingsService { get; set; } = default!;
-    
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    // Class variables
+    private List<API.User> _users = null!;
 
     // Page variables
     protected PageLoad? PageLoad;
-    protected API.User User = null!;
-    protected Web.Models.Settings Settings = new();
-    protected bool DevelopmentMode;
     protected string SearchString = null!;
+    protected Settings Settings = null!;
+    protected API.User User = null!;
     protected MudDataGrid<API.Case> CasesTable = null!;
+    protected bool DevelopmentMode;
 
-    // Class variables
-    private List<API.User> _sioUsers = null!;
+    // Component parameters and dependency injection
+    [Inject] private TokenService TokenService { get; set; } = null!;
 
-    // Page initialized
-    protected override async Task OnInitializedAsync()
+    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = null!;
+
+    [Inject] private LighthouseNotesAPIPut LighthouseNotesAPIPut { get; set; } = null!;
+
+    [Inject] private IJSRuntime Js { get; set; } = null!;
+
+    [Inject] private IHostEnvironment HostEnvironment { get; set; } = null!;
+
+    [Inject] private ISettingsService SettingsService { get; set; } = null!;
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+    // Page initialized - get user details
+    protected override async Task OnParametersSetAsync()
     {
-        // Get SIO users from api
-        (Pagination, List<API.User>) usersWithPagination = await LighthouseNotesAPIGet.Users(sio: true);
-        _sioUsers = usersWithPagination.Item2;
-
         // Check if environment is development
         if (HostEnvironment.IsDevelopment()) DevelopmentMode = true;
 
-        // Fetch user details 
+        // Fetch user details
         User = await LighthouseNotesAPIGet.User();
 
-        // Mark page load as complete 
-        PageLoad?.LoadComplete();
+        // Get users from api
+        (API.Pagination, List<API.User>) usersWithPagination = await LighthouseNotesAPIGet.Users(1, 0);
+        _users = usersWithPagination.Item2;
+
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
     }
 
-    // Page rendered
+    //  Lifecycle method called after the component has rendered - get settings
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // If settings is null the get the settings
-        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
-            Settings.S3Endpoint == null)
-        {
-            // Get the settings redirect url
-            string? settingsRedirect = await SettingsService.CheckOrSet();
-            
-            // If the settings redirect url is not null then redirect 
-            if (settingsRedirect != null)
-            {
-                NavigationManager.NavigateTo(settingsRedirect, true);
-            }
-            
-            // Use the setting service to retrieve the settings
-            Settings = await SettingsService.Get();
+        // Call Check, Get or Set - to get the settings or a redirect url
+        (string?, Settings?) settingsCheckOrSetResult = await SettingsService.CheckGetOrSet();
 
-            // Re-render component
-            await InvokeAsync(StateHasChanged);
+        // If a redirect url is provided then use it
+        if (settingsCheckOrSetResult.Item1 != null)
+        {
+            NavigationManager.NavigateTo(settingsCheckOrSetResult.Item1, true);
+            return;
         }
+
+        // Set settings to the result
+        Settings = settingsCheckOrSetResult.Item2!;
+
+        // Mark page load as complete
+        PageLoad?.LoadComplete();
+
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
     }
 
+    // Load cases data grid and handle sorting
     protected async Task<GridData<API.Case>> LoadGridData(GridState<API.Case> state)
     {
         // Fetch cases from API
-        (Pagination, List<API.Case>?) cases;
+        (API.Pagination, List<API.Case>?) cases;
         if (!string.IsNullOrWhiteSpace(SearchString))
         {
             // Fetch cases from API
@@ -107,41 +105,43 @@ public class HomeBase : ComponentBase
         return data;
     }
 
+    // Search cases
     protected async Task Search()
     {
+        // If sort is set remove it because we can't sort and seach
         if (CasesTable.SortDefinitions.Count == 1)
             await CasesTable.RemoveSortAsync(CasesTable.SortDefinitions.First().Value.SortBy);
         await CasesTable.ReloadServerData();
     }
 
-    // SIO user search function - searches by given name or last name
-    protected async Task<IEnumerable<API.User>> SIOUserSearchFunc(string search)
+    // LeadInvestigator user search function - searches by given name or last name
+    protected async Task<IEnumerable<API.User>> UserSearchFunc(string search, CancellationToken token)
     {
-        if (string.IsNullOrEmpty(search)) return _sioUsers;
-        return await Task.FromResult(_sioUsers.Where(x =>
+        if (string.IsNullOrEmpty(search)) return _users;
+        return await Task.FromResult(_users.Where(x =>
             x.GivenName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
             x.LastName.Contains(search, StringComparison.OrdinalIgnoreCase)));
     }
 
-    // Case item edit committed 
+    // Case item edit committed - call API to update case
     protected async Task CommittedItemChanges(API.Case item)
     {
         // Create updated case
-        UpdateCase updateCase = new()
+        API.UpdateCase updateCase = new()
         {
             DisplayId = item.DisplayId,
             Name = item.Name,
-            SIOUserId = item.SIO.Id,
+            LeadInvestigatorEmailAddress = item.LeadInvestigator.EmailAddress,
             Status = item.Status
         };
 
-        // Call api to update user
+        // Call api to update case
         await LighthouseNotesAPIPut.Case(item.Id, updateCase);
     }
 
     // Copy access token to clipboard button clicked
     protected async Task CopyAccessTokenToClipboard()
     {
-        await Js.InvokeVoidAsync("navigator.clipboard.writeText", TokenProvider.AccessToken);
+        await Js.InvokeVoidAsync("navigator.clipboard.writeText", TokenService.GetAccessToken());
     }
 }

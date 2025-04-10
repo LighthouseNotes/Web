@@ -1,13 +1,14 @@
 @page "/account/localization"
 @inherits LocalizationBase
-@using System.Globalization
-@attribute [Authorize(Roles = "user")]
+@attribute [Authorize]
 <PageTitle> Localisation Settings </PageTitle>
 
 <PageLoad @ref="PageLoad">
-    <MudText Typo="Typo.h2" Align="Align.Center"> Localisation Settings </MudText>
+    <MudText Typo="Typo.h2" Align="Align.Center"> Localisation Settings</MudText>
 
-    <MudText Typo="Typo.subtitle1" Align="Align.Center"> Use the form below to edit how Lighthouse notes will display values </MudText>
+    <MudText Typo="Typo.subtitle1" Align="Align.Center"> Use the form below to edit how Lighthouse notes will display
+        values
+    </MudText>
 
     <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
         <DataAnnotationsValidator/>
@@ -15,14 +16,21 @@
             <MudItem xs="12" sm="7">
                 <MudCard>
                     <MudCardContent>
-                        <MudAutocomplete T="TimeZoneInfo" Label="Timezone" @bind-Value="Model.TimeZone" For="@(() => Model.TimeZone)" SearchFunc="@TimeZoneSearch" MaxItems="20"/>
-
-                        <MudTextField T="string" Label="Date format" @bind-Value="Model.DateFormat" For="@(() => Model.DateFormat)"/>
-                        <MudTextField T="string" Label="Time format" @bind-Value="Model.TimeFormat" For="@(() => Model.TimeFormat)"/>
-                        <MudAutocomplete T="CultureInfo" Label="Culture" @bind-Value="Model.Culture" For="@(() => Model.Culture)" SearchFunc="@CultureSearch" ToStringFunc="@(e => e.DisplayName)" MaxItems="20"/>
+                        <MudAutocomplete T="TimeZoneInfo" Label="Timezone" @bind-Value="Model.TimeZone"
+                                         For="@(() => Model.TimeZone)" SearchFunc="@TimeZoneSearch" MaxItems="20"
+                                         ToStringFunc="@(t => t?.DisplayName)"/>
+                        <MudTextField T="string" Label="Date format" @bind-Value="Model.DateFormat"
+                                      For="@(() => Model.DateFormat)"/>
+                        <MudTextField T="string" Label="Time format" @bind-Value="Model.TimeFormat"
+                                      For="@(() => Model.TimeFormat)"/>
+                        <MudAutocomplete T="CultureInfo" Label="Culture" @bind-Value="Model.Culture"
+                                         For="@(() => Model.Culture)" SearchFunc="@CultureSearch"
+                                         ToStringFunc="@(e => e?.DisplayName)" MaxItems="20"/>
                     </MudCardContent>
                     <MudCardActions>
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"> Submit </MudButton>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                                   Class="ml-auto"> Save Localisation Settings
+                        </MudButton>
                     </MudCardActions>
                 </MudCard>
             </MudItem>

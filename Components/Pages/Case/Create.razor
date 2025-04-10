@@ -1,0 +1,64 @@
+﻿@page "/case/create"
+@inherits CreateBase
+@attribute [Authorize]
+<PageTitle> Create case</PageTitle>
+
+<PageLoad @ref="@PageLoad">
+    <MudText Typo="Typo.h1" Align="Align.Center"> Create case</MudText>
+    <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator/>
+        <MudStack>
+            <div>
+                <MudText Typo="Typo.subtitle1" Align="Align.Center"> To create a case complete the form below and click
+                    / tap 'Create'.
+                </MudText>
+                <MudText Typo="Typo.subtitle2" Align="Align.Center"> Set the case ID, name and users who should have
+                    access to the case.
+                </MudText>
+            </div>
+            <MudGrid Class="justify-center">
+                <MudItem xs="12" sm="7">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudTextField Label="Case ID"
+                                          @bind-Value="Model.CaseId" For="@(() => Model.CaseId)" Required="true"/>
+                            <MudTextField Label="Case name"
+                                          @bind-Value="Model.CaseName" For="@(() => Model.CaseName)" Required="true"/>
+                            <MudAutocomplete Label="Lead Investigator"
+                                             @bind-Value="Model.LeadInvestigator"
+                                             @bind-Value:after="LeadInvestigatorAfter"
+                                             For="@(() => Model.LeadInvestigator)"
+                                             T="API.User"
+                                             SearchFunc="@UserSearchFunc"
+                                             ToStringFunc="u => u?.DisplayName"
+                                             OpenOnFocus="false"
+                                             Required="true">
+                            </MudAutocomplete>
+                            <MudAutocomplete Label="Users"
+                                             @ref="CaseUsersAutoComplete"
+                                             T="API.User"
+                                             SearchFunc="@UserSearchFunc"
+                                             ValueChanged="@UserSelected"
+                                             OpenOnFocus="false"
+                                             ToStringFunc="u => u?.DisplayName"
+                                             Margin="Margin.Normal">
+                            </MudAutocomplete>
+                            @* Chips containing list of case users *@
+                            <MudChipSet T="API.User" AllClosable OnClose="UserRemoved">
+                                @foreach (Web.Models.API.User user in Model.Users.OfType<Web.Models.API.User>())
+                                {
+                                    <MudChip Value="@user" Text="@user.DisplayName"></MudChip>
+                                }
+                            </MudChipSet>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                                       Class="ml-auto"> Create
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </EditForm>
+</PageLoad>

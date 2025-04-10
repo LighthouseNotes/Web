@@ -18,15 +18,9 @@ public class LighthouseNotesErrors
     }
 
     [Serializable]
-    public class LighthouseNotesApiException : Exception
+    public class LighthouseNotesApiException(HttpRequestMessage request, HttpResponseMessage response) : Exception
     {
-        public LighthouseNotesApiException(HttpRequestMessage request, HttpResponseMessage response)
-        {
-            Request = request;
-            Response = response;
-        }
-
-        public HttpRequestMessage Request { get; }
-        public HttpResponseMessage Response { get; }
+        public HttpRequestMessage Request { get; } = request;
+        public HttpResponseMessage Response { get; } = response;
     }
 }

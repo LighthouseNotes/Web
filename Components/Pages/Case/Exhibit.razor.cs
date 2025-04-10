@@ -1,39 +1,48 @@
-﻿using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using Web.Models;
-
-namespace Web.Components.Pages.Case;
+﻿namespace Web.Components.Pages.Case;
 
 public class ExhibitBase : ComponentBase
 {
-    [Parameter] public required string CaseId { get; set; }
-    [Parameter] public required string ExhibitId { get; set; }
-    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
-    [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
-
     // Page variables
     protected PageLoad? PageLoad;
+    protected Settings Settings = null!;
     protected API.Exhibit Exhibit = null!;
-    protected Settings Settings = new();
 
-    // On parameters set 
+    // Component parameters and dependency injection
+    [Parameter] public required string CaseId { get; set; }
+    [Parameter] public required string ExhibitId { get; set; }
+    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = null!;
+    [Inject] private ISettingsService SettingsService { get; set; } = null!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+    // Lifecycle method triggered when parameters are set or changed - get exhibit details
     protected override async Task OnParametersSetAsync()
     {
         Exhibit = await LighthouseNotesAPIGet.Exhibit(CaseId, ExhibitId);
 
-        PageLoad?.LoadComplete();
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
     }
 
-    // After page render
+    //  Lifecycle method called after the component has rendered - get settings
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Get user settings from browser storage
-            ProtectedBrowserStorageResult<Settings> result =
-                await ProtectedLocalStore.GetAsync<Settings>("settings");
+            // Call Check, Get or Set - to get the settings or a redirect url
+            (string?, Settings?) settingsCheckOrSetResult = await SettingsService.CheckGetOrSet();
 
-            // If result is success and not null assign value from browser storage, if result is success and null assign default values, if result is unsuccessful assign default values
-            Settings = result.Success ? result.Value ?? new Settings() : new Settings();
+            // If a redirect url is provided then use it
+            if (settingsCheckOrSetResult.Item1 != null)
+            {
+                NavigationManager.NavigateTo(settingsCheckOrSetResult.Item1, true);
+                return;
+            }
+
+            // Set settings to the result
+            Settings = settingsCheckOrSetResult.Item2!;
+
+            // Mark page load as complete
+            PageLoad?.LoadComplete();
 
             // Re-render component
             await InvokeAsync(StateHasChanged);

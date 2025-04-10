@@ -9,42 +9,19 @@ body {
     min-height: 100vh;
 }
 
-/* Mobile adjustments */
+/* Mobile text adjustments */
 .mud-typography {
     overflow-wrap: break-word;
 }
 
+/* Mobile table adjustments */
 .mud-xs-table .mud-table-cell {
     flex-wrap: wrap;
 }
 
-@media only screen and (max-width: 960px) {
-    .e-toolbar .e-toolbar-item .e-tbar-btn:hover {
-        background: #fafafa;
-        box-shadow: none;
-        color: rgba(0, 0, 0, .87);
-        border: none;
-    }
-
-    .e-toolbar .e-toolbar-item .e-tbar-btn:hover .e-icons {
-        color: unset;
-    }
-}
-
-/* Rich text editor mention link */
+/* Mention links */
 .mention-link {
     color: #1cbfffff !important;
-}
-
-/* Rich text editor image modal */
-#modal-RTE_image {
-    z-index: 10007 !important;
-}
-
-/* Rich text editor images */
-.e-rte-image.e-imginline, .e-rte-audio.e-audio-inline, .e-rte-video.e-video-inline {
-    max-width: 100% !important;
-    height: auto;
 }
 
 /* Footer */
@@ -52,6 +29,7 @@ footer {
     background-color: var(--mud-palette-appbar-background);
 }
 
+/* Footer animation */
 .footer-in {
     transition: 225ms margin-left;
 }

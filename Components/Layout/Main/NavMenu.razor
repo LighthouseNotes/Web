@@ -3,85 +3,82 @@
     @if (ContainsItems)
     {
         @* If user has the role user and is on a case page display case menu items *@
-        <AuthorizeView Roles="user">
-            @if (CurrentUrl != null && IsCaseUrl())
-            {
-                <MudSelect T="string" Value="@CaseId" Label="Case" AnchorOrigin="Origin.BottomCenter" Class="ma-4" SelectedValuesChanged="CaseChanged">
-                    @if (Cases.Item2 != null)
+        @if (CurrentUrl != null && IsCaseUrl())
+        {
+            <MudSelect T="string" Value="@CaseId" Label="Case" AnchorOrigin="Origin.BottomCenter" Class="ma-4"
+                       SelectedValuesChanged="CaseChanged">
+                @if (Cases.Item2 != null)
+                {
+                    @foreach (API.Case sCase in Cases.Item2)
                     {
-                        @foreach (API.Case sCase in Cases.Item2)
-                        {
-                            <MudSelectItem Value="sCase.Id">
-                                @sCase.DisplayName
-                            </MudSelectItem>
-                        }
+                        <MudSelectItem Value="sCase.Id">
+                            @sCase.DisplayName
+                        </MudSelectItem>
                     }
+                }
 
-                </MudSelect>
+            </MudSelect>
 
-                <MudNavLink Href="@($"/case/{CaseId}")" Icon="@Icons.Material.Filled.Folder" Match="NavLinkMatch.All"> Case </MudNavLink>
-                <MudNavLink Href="@($"/case/{CaseId}/exhibits")" Icon="@Icons.Material.Filled.AddCircle" Match="NavLinkMatch.All"> Exhibits </MudNavLink>
-                <MudText Typo="Typo.h5" Align="Align.Center" Class="pa-2"> Personal </MudText>
-                <MudDivider/>
-                <MudNavLink Href="@($"/case/{CaseId}/contemporaneous-notes")" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.NoteAdd"> Contemporaneous Notes </MudNavLink>
+            <MudNavLink Href="@($"/case/{CaseId}")" Icon="@Icons.Material.Filled.Folder" Match="NavLinkMatch.All">
+                Case
+            </MudNavLink>
+            <MudNavLink Href="@($"/case/{CaseId}/exhibits")" Icon="@Icons.Material.Filled.AddCircle"
+                        Match="NavLinkMatch.All"> Exhibits
+            </MudNavLink>
+            <MudText Typo="Typo.h5" Align="Align.Center" Class="pa-2"> Personal</MudText>
+            <MudDivider/>
+            <MudNavLink Href="@($"/case/{CaseId}/contemporaneous-notes")" Match="NavLinkMatch.All"
+                        Icon="@Icons.Material.Filled.NoteAdd"> Contemporaneous Notes
+            </MudNavLink>
 
-                <MudNavGroup Title="Tabs">
+            <MudNavGroup Title="Tabs">
 
-                    @if (Tabs != null)
+                @if (Tabs != null)
+                {
+                    @foreach (API.Tab? tab in Tabs)
                     {
-                        @foreach (API.Tab? tab in Tabs)
-                        {
-                            @* @onClick="() => Test(tab.Id)" *@
-                            <MudNavLink Href="@($"/case/{CaseId}/tab/{tab.Id}")" Match="NavLinkMatch.All"> @tab.Name </MudNavLink>
-                        }
+                        <MudNavLink Href="@($"/case/{CaseId}/tab/{tab.Id}")"
+                                    Match="NavLinkMatch.All"> @tab.Name </MudNavLink>
                     }
-                    <MudNavLink OnClick="CreateTab" Icon="@Icons.Material.Filled.InsertDriveFile"> Create Tab </MudNavLink>
+                }
+                <MudNavLink OnClick="CreateTab" Icon="@Icons.Material.Filled.InsertDriveFile"> Create Tab</MudNavLink>
 
-                </MudNavGroup>
+            </MudNavGroup>
 
-                <MudText Typo="Typo.h5" Align="Align.Center" Class="pa-2"> Shared </MudText>
-                <MudDivider/>
-                <MudNavLink Href="@($"/case/{CaseId}/shared/contemporaneous-notes")" Icon="@Icons.Material.Filled.NoteAdd"> Contemporaneous Notes </MudNavLink>
-                <MudNavGroup Title="Tabs">
+            <MudText Typo="Typo.h5" Align="Align.Center" Class="pa-2"> Shared</MudText>
+            <MudDivider/>
+            <MudNavLink Href="@($"/case/{CaseId}/shared/contemporaneous-notes")" Icon="@Icons.Material.Filled.NoteAdd">
+                Contemporaneous Notes
+            </MudNavLink>
+            <MudNavGroup Title="Tabs">
 
-                    @if (SharedTabs != null)
+                @if (SharedTabs != null)
+                {
+                    @foreach (API.SharedTab sharedTab in SharedTabs)
                     {
-                        @foreach (API.SharedTab sharedTab in SharedTabs)
-                        {
-                            <MudNavLink Href="@($"/case/{CaseId}/shared/tab/{sharedTab.Id}")" Match="NavLinkMatch.All"> @sharedTab.Name </MudNavLink>
-                        }
+                        <MudNavLink Href="@($"/case/{CaseId}/shared/tab/{sharedTab.Id}")"
+                                    Match="NavLinkMatch.All"> @sharedTab.Name </MudNavLink>
                     }
-                    <MudNavLink OnClick="@CreateSharedTab" Icon="@Icons.Material.Filled.InsertDriveFile"> Create Shared Tab </MudNavLink>
+                }
+                <MudNavLink OnClick="@CreateSharedTab" Icon="@Icons.Material.Filled.InsertDriveFile"> Create Shared
+                    Tab
+                </MudNavLink>
 
-                </MudNavGroup>
-            }
-            else if (CurrentUrl != null && MenuUrls.Contains(CurrentUrl))
-            {
-                <MudNavLink Href="/audit" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Assignment"> Audit Log </MudNavLink>
-            }
-
-        </AuthorizeView>
-
-        @* If user has the role sio and is on a page that should display sio menu items *@
-        <AuthorizeView Roles="sio">
-            @if (CurrentUrl != null && MenuUrls.Contains(CurrentUrl))
-            {
-                <MudNavLink Href="/sio/create-case" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.CreateNewFolder"> Create Case </MudNavLink>
-            }
-        </AuthorizeView>
-
-        @* If user has the role sio and is on a page that should display sio menu items *@
-        <AuthorizeView Roles="organization-administrator">
-            @if (CurrentUrl != null && MenuUrls.Contains(CurrentUrl))
-            {
-                <MudNavLink Href="/organization-administrator/users" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.PersonAdd"> Manage Users </MudNavLink>
-                <MudNavLink Href="/organization-administrator/settings" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Settings"> Settings </MudNavLink>
-            }
-        </AuthorizeView>
+            </MudNavGroup>
+        }
+        /* Menu URL */
+        else if (CurrentUrl != null && MenuUrls.Contains(CurrentUrl))
+        {
+            <MudNavLink Href="/audit" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Assignment"> Audit Log
+            </MudNavLink>
+            <MudNavLink Href="/case/create" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.CreateNewFolder">
+                Create Case
+            </MudNavLink>
+        }
     }
     else
     {
-        <MudText> No menu items to display! </MudText>
+        <MudText Align="Align.Center"> No menu items to display!</MudText>
     }
 
 

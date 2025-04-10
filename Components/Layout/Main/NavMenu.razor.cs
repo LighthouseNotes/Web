@@ -1,18 +1,29 @@
 ﻿using System.Text.RegularExpressions;
-using MudBlazor;
-using Web.Models.API;
 
 namespace Web.Components.Layout.Main;
 
 public partial class NavMenuBase : ComponentBase
 {
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    // Page variables
+    protected readonly List<string> MenuUrls =
+    [
+        "",
+        "case/create",
+        "audit"
+    ];
 
-    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
+    protected string? CaseId;
+    protected (API.Pagination, List<API.Case>?) Cases;
+    protected string? CurrentUrl;
+    protected List<API.SharedTab>? SharedTabs;
+    protected List<API.Tab>? Tabs;
 
-    [Inject] private AuthenticationStateProvider AuthState { get; set; } = default!;
+    // Component parameters and dependency injection
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
 
-    [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = null!;
+
+    [Inject] private IDialogService DialogService { get; set; } = null!;
 
     [Parameter] public bool ContainsItems { get; set; }
 
@@ -20,32 +31,7 @@ public partial class NavMenuBase : ComponentBase
 
     [CascadingParameter] public Error.ErrorLayout? Error { get; set; }
 
-
-    protected string? CurrentUrl;
-    protected (Pagination, List<Case>?) Cases;
-    protected List<Tab>? Tabs;
-    protected List<SharedTab>? SharedTabs;
-    protected string? CaseId;
-
-    protected readonly List<string> MenuUrls = new()
-    {
-        "",
-        "sio/create-case",
-        "organization-administrator/users",
-        "organization-administrator/settings",
-        "audit"
-    };
-
-
-    private async Task SetValue(bool value)
-    {
-        if (ContainsItems != value)
-        {
-            ContainsItems = value;
-            await ContainsItemsChanged.InvokeAsync(value);
-        }
-    }
-
+    // Component parameters and dependency injection - carry out URL checks to decide if we need to show the menu
     protected override async Task OnParametersSetAsync()
     {
         // Get current url
@@ -54,15 +40,13 @@ public partial class NavMenuBase : ComponentBase
         // If current url is not null
         if (CurrentUrl != null)
         {
-            AuthenticationState authenticationState = await AuthState.GetAuthenticationStateAsync();
-
             // User is at a case page that should display case menu items
-            if (authenticationState.User.IsInRole("user") && IsCaseUrl())
+            if (IsCaseUrl())
             {
                 // Menu contains items so set to true
                 await SetValue(true);
 
-                // Get a list of cases for drop down 
+                // Get a list of cases for drop down
                 Cases = await LighthouseNotesAPIGet.Cases();
 
                 // Use regex to extract case id from url
@@ -74,10 +58,9 @@ public partial class NavMenuBase : ComponentBase
                     // Store case id in variable
                     CaseId = match.Value;
 
-                    // Fetch tabs and shared tabs 
+                    // Fetch tabs and shared tabs
                     Tabs = await LighthouseNotesAPIGet.Tabs(CaseId);
                     SharedTabs = await LighthouseNotesAPIGet.SharedTabs(CaseId);
-
 
                     // Re-render component
                     await InvokeAsync(StateHasChanged);
@@ -86,17 +69,8 @@ public partial class NavMenuBase : ComponentBase
                 }
             }
 
-            // SIO is at a page that should display sio menu items
-            if (authenticationState.User.IsInRole("sio") && MenuUrls.Contains(CurrentUrl))
-            {
-                // Menu contains items so set to true
-                await SetValue(true);
-
-                return;
-            }
-
-            // Organization administrator is at a page that should display organization administrator menu items
-            if (authenticationState.User.IsInRole("organization-administrator") && MenuUrls.Contains(CurrentUrl))
+            // If the user is at page which should display the menu
+            if (MenuUrls.Contains(CurrentUrl))
             {
                 // Menu contains items so set to true
                 await SetValue(true);
@@ -109,55 +83,87 @@ public partial class NavMenuBase : ComponentBase
         }
     }
 
+    // Set value - Updates the contains items parameter
+    private async Task SetValue(bool value)
+    {
+        if (ContainsItems != value)
+        {
+            ContainsItems = value;
+            await ContainsItemsChanged.InvokeAsync(value);
 
+            // Re-render component
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // Create tab - create tab dialog and call API if user submits tab
     protected async Task CreateTab()
     {
+        // Create the create tab dialog
         DialogParameters<AddTabDialog> parameters = new() { { p => p.CaseId, CaseId } };
         DialogOptions options = new() { CloseOnEscapeKey = true };
-        IDialogReference? dialog = await DialogService.ShowAsync<AddTabDialog>("Add tab", parameters, options);
+        IDialogReference dialog = await DialogService.ShowAsync<AddTabDialog>("Add tab", parameters, options);
+
+        // Get result of dialog
         DialogResult? result = await dialog.Result;
 
-        if (!result.Canceled)
+        // If dialog was not canceled then call the API to create the tab
+        if (!result!.Canceled)
         {
             Tabs = await LighthouseNotesAPIGet.Tabs(CaseId);
             await InvokeAsync(StateHasChanged);
         }
     }
 
+    // Create shared tab - create shared tab dialog and call API if user submits tab
     protected async Task CreateSharedTab()
     {
+        // Create the create shared tab dialog
         DialogParameters<AddSharedTabDialog> parameters = new() { { p => p.CaseId, CaseId } };
         DialogOptions options = new() { CloseOnEscapeKey = true };
-        IDialogReference? dialog =
+        IDialogReference dialog =
             await DialogService.ShowAsync<AddSharedTabDialog>("Add shared tab", parameters, options);
+        // Get result of dialog
         DialogResult? result = await dialog.Result;
 
-        if (!result.Canceled)
+        // If dialog was not canceled then call the API to create the tab
+        if (!result!.Canceled)
         {
             SharedTabs = await LighthouseNotesAPIGet.SharedTabs(CaseId);
             await InvokeAsync(StateHasChanged);
         }
     }
 
+    // Is Case URL - uses regex to check if the URL is a case URL
     protected bool IsCaseUrl()
     {
+        // Create regex
         Regex re = CaseUrlRegex();
 
+        // Check if there is a match
         return re.IsMatch(CurrentUrl!);
     }
 
-
-    protected void CaseChanged(IEnumerable<string> caseIdToNavigateTo)
+    // Case changed - if the user changes case on the drop-down then navigate to it
+    protected void CaseChanged(IEnumerable<string?>? caseIdToNavigateTo)
     {
+        // Create regex pattern
         Regex pattern = CaseRegex();
-        NavigationManager.NavigateTo(
-            pattern.Replace(new Uri(NavigationManager.Uri).PathAndQuery,
-                caseIdToNavigateTo.First(), 1));
+
+        // Check if case id to navigate to is not null
+        if (caseIdToNavigateTo != null)
+
+            // Replace the case ID in the current url with the one the user wishes to change to
+            NavigationManager.NavigateTo(
+                pattern.Replace(new Uri(NavigationManager.Uri).PathAndQuery,
+                    caseIdToNavigateTo.First()!, 1));
     }
 
+    // Case ID Regex
     [GeneratedRegex("[a-zA-Z0-9]{10}")]
     private static partial Regex CaseRegex();
 
+    // Case URL regex
     [GeneratedRegex(@"(case\/[a-zA-Z0-9]{10}\/shared)|(case\/[a-zA-Z0-9]{10})")]
     private static partial Regex CaseUrlRegex();
 }

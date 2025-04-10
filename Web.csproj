@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <NoWarn>CS8620</NoWarn>
@@ -11,31 +11,37 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.4.1"/>
-        <PackageReference Include="Auth0.ManagementApi" Version="7.26.1"/>
-        <PackageReference Include="Auth0Net.DependencyInjection" Version="3.1.0"/>
-        <PackageReference Include="HtmlAgilityPack" Version="1.11.57"/>
-        <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="7.0.17" />
-        <PackageReference Include="MudBlazor" Version="6.17.0"/>
-        <PackageReference Include="Syncfusion.Blazor.Core" Version="24.1.41"/>
-        <PackageReference Include="Syncfusion.Blazor.RichTextEditor" Version="24.1.41"/>
-        <PackageReference Include="Syncfusion.Blazor.Themes" Version="24.1.41"/>
+        <PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="9.0.3" />
+        <PackageReference Include="Microsoft.Identity.Web" Version="3.8.2" />
+        <PackageReference Include="MudBlazor" Version="8.5.1" />
+        <PackageReference Include="MudExRichTextEditor" Version="8.0.3" />
+        <PackageReference Include="System.Text.Json" Version="9.0.3" />
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="System.Security.Authentication"/>
-        <Using Include="System.Security.Claims"/>
-        <Using Include="Microsoft.AspNetCore.Components"/>
-        <Using Include="Microsoft.AspNetCore.Components.Authorization"/>
-        <Using Include="Microsoft.JSInterop"/>
-        <Using Include="Web.Components.Layout.Containers"/>
-        <Using Include="Web.Services"/>
-        <Using Include="Web.Services.API"/>
+        <Using Include="Microsoft.AspNetCore.Components.Forms" />
+        <Using Include="MudBlazor" />
+        <Using Include="MudBlazor.Extensions.Components" />
+        <Using Include="MudExRichTextEditor" />
+        <Using Include="MudExRichTextEditor.Extensibility" />
+        <Using Include="MudExRichTextEditor.Types" />
+        <Using Include="Nextended.Core.Extensions" />
+        <Using Include="System.ComponentModel.DataAnnotations" />
+        <Using Include="System.Security.Authentication" />
+        <Using Include="System.Security.Claims" />
+        <Using Include="Microsoft.AspNetCore.Components" />
+        <Using Include="Microsoft.AspNetCore.Components.Authorization" />
+        <Using Include="Microsoft.JSInterop" />
+        <Using Include="Web.Components.Layout.Containers" />
+        <Using Include="Web.Models" />
+        <Using Include="Web.Services" />
+        <Using Include="Web.Services.API" />
         <Using Include="Web.Models.API">
             <Alias>API</Alias>
         </Using>
-        <Using Include="Web.Components.Dialogs.Personal"/>
-        <Using Include="Web.Components.Dialogs.Shared"/>
+        <Using Include="Web.Components.Dialogs.Personal" />
+        <Using Include="Web.Components.Dialogs.Shared" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Web.Models.API;
@@ -8,9 +9,9 @@ namespace Web.Services.API;
 public class LighthouseNotesAPIPost
 {
     private readonly HttpClient _http;
-    private readonly TokenProvider _tokenProvider;
+    private readonly TokenService _tokenService;
 
-    public LighthouseNotesAPIPost(IHttpClientFactory clientFactory, TokenProvider tokenProvider,
+    public LighthouseNotesAPIPost(IHttpClientFactory clientFactory, TokenService tokenService,
         IConfiguration configuration)
     {
         // Create http client
@@ -20,7 +21,7 @@ public class LighthouseNotesAPIPost
         _http.BaseAddress = new Uri($"{configuration["LighthouseNotesApiUrl"]}/");
 
         // Set token provider
-        _tokenProvider = tokenProvider;
+        _tokenService = tokenService;
     }
 
     // POST: /user
@@ -31,7 +32,7 @@ public class LighthouseNotesAPIPost
             "user");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
@@ -46,27 +47,137 @@ public class LighthouseNotesAPIPost
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
 
+    // POST: /case/?/?/file
+    public async Task<string> File(string caseId, string type, UploadableFile file)
+    {
+        // Create request
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"case/{caseId}/{type}/file");
+
+        // Add Bearer token
+        string? token = _tokenService.GetAccessToken();
+        request.Headers.Add("Authorization", $"Bearer {token}");
+
+        // Prepare file content
+        MultipartFormDataContent multipartContent = new();
+
+        // Create stream content
+        MemoryStream memoryStream = new(file.Data);
+        StreamContent streamContent = new(memoryStream);
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+        // Add stream to form
+        multipartContent.Add(streamContent, "file", file.FileName);
+
+        // Attach content to request
+        request.Content = multipartContent;
+
+        // Send request
+        HttpResponseMessage response = await _http.SendAsync(request);
+
+        // Handle errors
+        // If response is anything other than a 500 internal server error throw an exception
+        if (!response.IsSuccessStatusCode)
+            if (response.StatusCode != HttpStatusCode.InternalServerError)
+                throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+
+        // Read response
+        string responseContent = await response.Content.ReadAsStringAsync();
+
+        // If response is not an 500 internal server error return the content
+        if (response.StatusCode != HttpStatusCode.InternalServerError)
+            return System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+
+        // Parse response
+        Error errorMessage = JsonSerializer.Deserialize<Error>(responseContent, JsonOptions.DefaultOptions) ??
+                                    throw new LighthouseNotesErrors.ShouldNotBeNullException();
+
+        // If error message is one about hashes display it
+        if (errorMessage.Title == "Could not find hash value for the image!" ||
+            errorMessage.Title == "MD5 hash verification failed!" ||
+            errorMessage.Title == "SHA256 hash verification failed!")
+            return $"/img/image-error.jpeg";
+
+        throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+    }
+
+     // POST: /case/?/shared/?/file
+    public async Task<string> SharedFile(string caseId, string type, UploadableFile file)
+    {
+        // Create request
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"case/{caseId}/{type}/file");
+
+        // Add Bearer token
+        string? token = _tokenService.GetAccessToken();
+        request.Headers.Add("Authorization", $"Bearer {token}");
+
+        // Prepare file content
+        MultipartFormDataContent multipartContent = new();
+
+        // Create stream content
+        MemoryStream memoryStream = new(file.Data);
+        StreamContent streamContent = new(memoryStream);
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+        // Add stream to form
+        multipartContent.Add(streamContent, "file", file.FileName);
+
+        // Attach content to request
+        request.Content = multipartContent;
+
+        // Send request
+        HttpResponseMessage response = await _http.SendAsync(request);
+
+        // Handle errors
+        // If response is anything other than a 500 internal server error throw an exception
+        if (!response.IsSuccessStatusCode)
+            if (response.StatusCode != HttpStatusCode.InternalServerError)
+                throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+
+        // Read response
+        string responseContent = await response.Content.ReadAsStringAsync();
+
+        // If response is not an 500 internal server error return the content
+        if (response.StatusCode != HttpStatusCode.InternalServerError)
+            return System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+
+        // Parse response
+        Error errorMessage = JsonSerializer.Deserialize<Error>(responseContent, JsonOptions.DefaultOptions) ??
+                                    throw new LighthouseNotesErrors.ShouldNotBeNullException();
+
+        // If error message is one about hashes display it
+        if (errorMessage.Title == "Could not find hash value for the image!" ||
+            errorMessage.Title == "MD5 hash verification failed!" ||
+            errorMessage.Title == "SHA256 hash verification failed!")
+            return $"/img/image-error.jpeg";
+
+        throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+    }
+
     // POST: /case
-    public async Task Case(AddCase content)
+    public async Task<Case> Case(AddCase content)
     {
         // Create request
         HttpRequestMessage request = new(HttpMethod.Post,
             "case");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
         request.Content = new StringContent(JsonSerializer.Serialize(content), Encoding.UTF8);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-        // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
 
         // If response is not a success status code, throw exception
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
+
+        // Read response and return parsed response
+        string responseContent = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<Case>(responseContent, JsonOptions.DefaultOptions) ??
+               throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
 
@@ -78,13 +189,13 @@ public class LighthouseNotesAPIPost
             $"case/{caseId}/contemporaneous-note");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Create memory stream from bytes
         MemoryStream dataStream = new(tabContent);
 
-        // Create form 
+        // Create form
         using MultipartFormDataContent content = new();
         content.Add(new StreamContent(dataStream), "file", "note.txt");
 
@@ -107,7 +218,7 @@ public class LighthouseNotesAPIPost
             $"case/{caseId}/contemporaneous-notes/search");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
@@ -124,7 +235,7 @@ public class LighthouseNotesAPIPost
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<ContemporaneousNotes>>(responseContent) ??
+        return JsonSerializer.Deserialize<List<ContemporaneousNotes>>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -136,13 +247,13 @@ public class LighthouseNotesAPIPost
             $"case/{caseId}/shared/contemporaneous-note");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Create memory stream from bytes
         MemoryStream dataStream = new(tabContent);
 
-        // Create form 
+        // Create form
         using MultipartFormDataContent content = new();
         content.Add(new StreamContent(dataStream), "file", "Tab.txt");
 
@@ -166,7 +277,7 @@ public class LighthouseNotesAPIPost
             $"case/{caseId}/shared/contemporaneous-notes/search");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
@@ -183,7 +294,7 @@ public class LighthouseNotesAPIPost
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<SharedContemporaneousNotes>>(responseContent) ??
+        return JsonSerializer.Deserialize<List<SharedContemporaneousNotes>>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -195,7 +306,7 @@ public class LighthouseNotesAPIPost
             $"case/{caseId}/tab");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
@@ -218,7 +329,7 @@ public class LighthouseNotesAPIPost
             $"case/{caseId}/shared/tab");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
@@ -241,13 +352,13 @@ public class LighthouseNotesAPIPost
             $"/case/{caseId}/tab/{tabId}/content");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Create memory stream from bytes
         MemoryStream dataStream = new(tabContent);
 
-        // Create form 
+        // Create form
         using MultipartFormDataContent content = new();
         content.Add(new StreamContent(dataStream), "file", "Tab.txt");
 
@@ -270,13 +381,13 @@ public class LighthouseNotesAPIPost
             $"/case/{caseId}/shared/tab/{tabId}/content");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Create memory stream from bytes
         MemoryStream dataStream = new(tabContent);
 
-        // Create form 
+        // Create form
         using MultipartFormDataContent content = new();
         content.Add(new StreamContent(dataStream), "file", "Tab.txt");
 
@@ -299,7 +410,7 @@ public class LighthouseNotesAPIPost
             $"case/{caseId}/exhibit");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
@@ -315,7 +426,7 @@ public class LighthouseNotesAPIPost
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<Exhibit>(responseContent) ??
+        return JsonSerializer.Deserialize<Exhibit>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 }

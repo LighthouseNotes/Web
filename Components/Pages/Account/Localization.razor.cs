@@ -1,70 +1,52 @@
-using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using MudBlazor;
-using Web.Models;
 
 namespace Web.Components.Pages.Account;
 
 public class LocalizationBase : ComponentBase
 {
-    [Inject] private ISnackbar Snackbar { get; set; } = default!;
-    [Inject] private LighthouseNotesAPIPut LighthouseNotesAPIPut { get; set; } = default!;
-    [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
-    [Inject] private ISettingsService SettingsService { get; set; } = default!;
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    // Class variables
+    private readonly List<CultureInfo> _cultures = CultureInfo.GetCultures(CultureTypes.AllCultures).ToList();
+    private readonly List<TimeZoneInfo> _timeZones = TimeZoneInfo.GetSystemTimeZones().ToList();
 
-
-    // Page variables 
-    // ReSharper disable once FieldCanBeMadeReadOnly.Global
-    protected LocalizationForm Model = new();
+    // Page variables
+    protected readonly LocalizationForm Model = new();
+    private Settings _settings = null!;
     protected PageLoad? PageLoad;
 
-    // Class variables
-    private readonly ReadOnlyCollection<TimeZoneInfo> _timeZones = TimeZoneInfo.GetSystemTimeZones();
-    private readonly List<CultureInfo> _cultures = CultureInfo.GetCultures(CultureTypes.AllCultures).ToList();
-    private Settings _settings = new();
+    // Component parameters and dependency injection
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
+    [Inject] private LighthouseNotesAPIPut LighthouseNotesAPIPut { get; set; } = null!;
+    [Inject] private ProtectedLocalStorage ProtectedLocalStore { get; set; } = null!;
+    [Inject] private ISettingsService SettingsService { get; set; } = null!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+    [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
 
-    protected class LocalizationForm
-    {
-        [Required] public TimeZoneInfo TimeZone { get; set; } = null!;
-
-        [Required] public string DateFormat { get; set; } = null!;
-
-        [Required] public string TimeFormat { get; set; } = null!;
-
-        [Required] public CultureInfo Culture { get; set; } = null!;
-    }
-
-
-    // Page rendered
+    // Lifecycle method called after the component has rendered - get settings and prefill model
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // If settings is null the get the settings
-        if (_settings.Auth0UserId == null || _settings.OrganizationId == null || _settings.UserId == null ||
-            _settings.S3Endpoint == null)
+        if (firstRender)
         {
-            // Get the settings redirect url
-            string? settingsRedirect = await SettingsService.CheckOrSet();
-            
-            // If the settings redirect url is not null then redirect 
-            if (settingsRedirect != null)
-            {
-                NavigationManager.NavigateTo(settingsRedirect, true);
-            }
-            
-            // Use the setting service to retrieve the settings
-            _settings = await SettingsService.Get();
+            // Call Check, Get or Set - to get the settings or a redirect url
+            (string?, Settings?) settingsCheckOrSetResult = await SettingsService.CheckGetOrSet();
 
-            // Set model from settings 
+            // If a redirect url is provided then use it
+            if (settingsCheckOrSetResult.Item1 != null)
+            {
+                NavigationManager.NavigateTo(settingsCheckOrSetResult.Item1, true);
+                return;
+            }
+
+            // Set settings to the result
+            _settings = settingsCheckOrSetResult.Item2!;
+
+            // Set model from settings
             Model.TimeZone = TimeZoneInfo.FindSystemTimeZoneById(_settings.TimeZone);
             Model.Culture = CultureInfo.CurrentCulture;
             Model.DateFormat = _settings.DateFormat;
             Model.TimeFormat = _settings.TimeFormat;
 
-            // Mark page load as complete 
+            // Mark page load as complete
             PageLoad?.LoadComplete();
 
             // Re-render component
@@ -72,9 +54,10 @@ public class LocalizationBase : ComponentBase
         }
     }
 
-
+    // Valid form submit - call API to update and update browser storage
     protected async Task OnValidSubmit(EditContext context)
     {
+        // Create settings model
         API.UserSettings settings = new()
         {
             TimeZone = Model.TimeZone.Id,
@@ -83,21 +66,26 @@ public class LocalizationBase : ComponentBase
             Locale = Model.Culture.Name
         };
 
+        // Cal the API
         await LighthouseNotesAPIPut.UserSettings(settings);
 
         // Notify the user of case creation
         Snackbar.Add("Your localization settings have been updated!", Severity.Success);
 
+        // Get authentication sate
+        AuthenticationState authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
         // Update user settings in browser storage
         await ProtectedLocalStore.SetAsync("settings", new Settings
         {
+            EmailAddress = authenticationState.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!,
             TimeZone = settings.TimeZone,
             DateFormat = settings.DateFormat,
             TimeFormat = settings.TimeFormat,
             DateTimeFormat = settings.DateFormat + " " + settings.TimeFormat
         });
 
-
+        // If culture has changed then use the culture controller to update the culture
         if (Model.Culture.Name != CultureInfo.CurrentCulture.Name)
         {
             // Get current url as an escaped string
@@ -112,22 +100,44 @@ public class LocalizationBase : ComponentBase
                 $"Culture/Set?culture={cultureEscaped}&redirectUrl={currentUrl}",
                 true);
         }
+
+        // Update model from settings
+        Model.TimeZone = TimeZoneInfo.FindSystemTimeZoneById(settings.TimeZone);
+        Model.Culture = CultureInfo.CurrentCulture;
+        Model.DateFormat = settings.DateFormat;
+        Model.TimeFormat = settings.TimeFormat;
+
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
     }
 
-
-    protected Task<IEnumerable<TimeZoneInfo>> TimeZoneSearch(string value)
+    // Timezone search - searches all .NET timezones by display name
+    protected Task<IEnumerable<TimeZoneInfo>> TimeZoneSearch(string value, CancellationToken token)
     {
-        // If text is null or empty, show complete list
-        return Task.FromResult(string.IsNullOrEmpty(value)
-            ? _timeZones
-            : _timeZones.Where(x => x.DisplayName.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
+        if (string.IsNullOrEmpty(value)) return Task.FromResult<IEnumerable<TimeZoneInfo>>(_timeZones);
+
+        return Task.FromResult(_timeZones.Where(x =>
+            x.DisplayName.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
     }
 
-    protected Task<IEnumerable<CultureInfo>> CultureSearch(string value)
+    // Culture search - searches all .NET cultures by english name
+    protected Task<IEnumerable<CultureInfo>> CultureSearch(string value, CancellationToken token)
     {
         // If text is null or empty, show complete list
         return Task.FromResult(string.IsNullOrEmpty(value)
             ? _cultures
             : _cultures.Where(x => x.EnglishName.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
+    }
+
+    // Form
+    protected class LocalizationForm
+    {
+        [Required] public TimeZoneInfo TimeZone { get; set; } = null!;
+
+        [Required] public string DateFormat { get; set; } = null!;
+
+        [Required] public string TimeFormat { get; set; } = null!;
+
+        [Required] public CultureInfo Culture { get; set; } = null!;
     }
 }

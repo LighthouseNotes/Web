@@ -1,0 +1,24 @@
+﻿@inherits ContemporaneousNoteTextEditorDialogBase
+
+<MudDialog DisableSidePadding="true">
+    <DialogContent>
+        <MudContainer Style="max-height: 80vh; overflow-y: scroll">
+            @* Rich text editor *@
+            <MudExRichTextEdit @ref="@TextEditor"
+                               Tools="Tools"
+                               Modules="Modules"
+                               EnableResize="true"
+                               CustomUploadFunc="OnUpload"
+                               Placeholder="Write your note here!">
+            </MudExRichTextEdit>
+        </MudContainer>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Primary"
+                   OnClick="@SaveContent"> Save & Exit
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="@Color.Warning" OnClick="@Cancel"> Exit</MudButton>
+    </DialogActions>
+
+</MudDialog>

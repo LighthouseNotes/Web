@@ -7,9 +7,9 @@ namespace Web.Services.API;
 public class LighthouseNotesAPIGet
 {
     private readonly HttpClient _http;
-    private readonly TokenProvider _tokenProvider;
+    private readonly TokenService _tokenService;
 
-    public LighthouseNotesAPIGet(IHttpClientFactory clientFactory, TokenProvider tokenProvider,
+    public LighthouseNotesAPIGet(IHttpClientFactory clientFactory, TokenService tokenService,
         IConfiguration configuration)
     {
         // Create http client
@@ -19,33 +19,7 @@ public class LighthouseNotesAPIGet
         _http.BaseAddress = new Uri($"{configuration["LighthouseNotesApiUrl"]}/");
 
         // Set token provider
-        _tokenProvider = tokenProvider;
-    }
-    //////////////////
-    // Organization //
-    //////////////////
-
-    // GET: /organization/config
-    public async Task<OrganizationSettings> OrganizationSettings()
-    {
-        // Create request
-        HttpRequestMessage request = new(HttpMethod.Get, "/organization/settings");
-
-        // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
-        request.Headers.Add("Authorization", $"Bearer {token}");
-
-        // Send request
-        HttpResponseMessage response = await _http.SendAsync(request);
-
-        // If response is not a success status code, throw exception
-        if (!response.IsSuccessStatusCode)
-            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
-
-        // Read response and return parsed response
-        string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<OrganizationSettings>(responseContent) ??
-               throw new LighthouseNotesErrors.ShouldNotBeNullException();
+        _tokenService = tokenService;
     }
 
     ///////////
@@ -69,7 +43,7 @@ public class LighthouseNotesAPIGet
             request = new HttpRequestMessage(HttpMethod.Get, $"users?page={page}&pageSize={pageSize}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -88,7 +62,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return (pagination, JsonSerializer.Deserialize<List<User>>(responseContent) ??
+        return (pagination, JsonSerializer.Deserialize<List<User>>(responseContent, JsonOptions.DefaultOptions) ??
                             throw new LighthouseNotesErrors.ShouldNotBeNullException());
     }
 
@@ -99,7 +73,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"user/{userId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -111,30 +85,30 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<User>(responseContent) ??
+        return JsonSerializer.Deserialize<User>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
     // GET: /user/?/settings
-    public async Task<Settings> UserSettings()
+    public async Task<UserSettings> UserSettings()
     {
         // Create request
         HttpRequestMessage request = new(HttpMethod.Get, "user/settings");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
-        
+
         // If response is not a success status code, throw exception
         if (!response.IsSuccessStatusCode)
             throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<Settings>(responseContent) ??
+        return JsonSerializer.Deserialize<UserSettings>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -157,10 +131,10 @@ public class LighthouseNotesAPIGet
             request = new HttpRequestMessage(HttpMethod.Get, $"cases?page={page}&pageSize={pageSize}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
-        // Send request 
+        // Send request
         HttpResponseMessage response = await _http.SendAsync(request);
 
         // If response is not a success status code, throw exception
@@ -176,7 +150,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return (pagination, JsonSerializer.Deserialize<List<Case>>(responseContent));
+        return (pagination, JsonSerializer.Deserialize<List<Case>>(responseContent, JsonOptions.DefaultOptions));
     }
 
     // GET: /case/?
@@ -186,7 +160,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"case/{caseId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -198,7 +172,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<Case>(responseContent) ??
+        return JsonSerializer.Deserialize<Case>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -213,7 +187,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"case/{caseId}/contemporaneous-notes");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -225,7 +199,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<ContemporaneousNotes>>(responseContent) ??
+        return JsonSerializer.Deserialize<List<ContemporaneousNotes>>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -236,7 +210,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"case/{caseId}/contemporaneous-note/{noteId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -255,7 +229,7 @@ public class LighthouseNotesAPIGet
             return responseContent;
 
         // Parse response
-        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ??
+        Error errorMessage = JsonSerializer.Deserialize<Error>(responseContent, JsonOptions.DefaultOptions) ??
                                     throw new LighthouseNotesErrors.ShouldNotBeNullException();
 
         // If error message is one about hashes display it
@@ -278,7 +252,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"case/{caseId}/shared/contemporaneous-notes");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -290,7 +264,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<SharedContemporaneousNotes>>(responseContent) ??
+        return JsonSerializer.Deserialize<List<SharedContemporaneousNotes>>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -301,7 +275,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"case/{caseId}/shared/contemporaneous-note/{noteId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -320,7 +294,7 @@ public class LighthouseNotesAPIGet
             return responseContent;
 
         // Parse response
-        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ??
+        Error errorMessage = JsonSerializer.Deserialize<Error>(responseContent, JsonOptions.DefaultOptions) ??
                                     throw new LighthouseNotesErrors.ShouldNotBeNullException();
 
         // If error message is one about hashes display it
@@ -345,7 +319,7 @@ public class LighthouseNotesAPIGet
             $"case/{caseId}/tabs");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -357,7 +331,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<Tab>>(responseContent) ??
+        return JsonSerializer.Deserialize<List<Tab>>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -369,7 +343,7 @@ public class LighthouseNotesAPIGet
             $"/case/{caseId}/tab/{tabId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request and ensure response
@@ -381,7 +355,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<Tab>(responseContent) ??
+        return JsonSerializer.Deserialize<Tab>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -392,7 +366,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"/case/{caseId}/tab/{tabId}/content");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -411,7 +385,7 @@ public class LighthouseNotesAPIGet
             return (true, responseContent);
 
         // Parse response
-        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ??
+        Error errorMessage = JsonSerializer.Deserialize<Error>(responseContent) ??
                                     throw new LighthouseNotesErrors.ShouldNotBeNullException();
 
         // If error message is one about hashes display it
@@ -433,7 +407,7 @@ public class LighthouseNotesAPIGet
             $"case/{caseId}/shared/tabs");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -445,7 +419,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<List<SharedTab>>(responseContent);
+        return JsonSerializer.Deserialize<List<SharedTab>>(responseContent, JsonOptions.DefaultOptions);
     }
 
     // GET: /case/?/shared/tab/?
@@ -456,7 +430,7 @@ public class LighthouseNotesAPIGet
             $"/case/{caseId}/shared/tab/{tabId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request and ensure response
@@ -468,7 +442,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<SharedTab>(responseContent) ??
+        return JsonSerializer.Deserialize<SharedTab>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -479,7 +453,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"/case/{caseId}/shared/tab/{tabId}/content");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -498,7 +472,7 @@ public class LighthouseNotesAPIGet
             return (true, responseContent);
 
         // Parse response
-        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ??
+        Error errorMessage = JsonSerializer.Deserialize<Error>(responseContent, JsonOptions.DefaultOptions) ??
                                     throw new LighthouseNotesErrors.ShouldNotBeNullException();
 
         // If error message is one about hashes display it
@@ -508,17 +482,17 @@ public class LighthouseNotesAPIGet
         throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
     }
     ///////////
-    // Image //
+    // File //
     ///////////
 
-    // GET: /case/?/?/image
-    public async Task<string> Image(string caseId, string type, string fileName)
+    // GET: /case/?/?/file
+    public async Task<string> File(string caseId, string type, string fileName)
     {
         // Create request
-        HttpRequestMessage request = new(HttpMethod.Get, $"/case/{caseId}/{type}/image/{fileName}");
+        HttpRequestMessage request = new(HttpMethod.Get, $"/case/{caseId}/{type}/file/{fileName}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -529,15 +503,15 @@ public class LighthouseNotesAPIGet
             if (response.StatusCode != HttpStatusCode.InternalServerError)
                 throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
 
-        // Read response 
+        // Read response
         string responseContent = await response.Content.ReadAsStringAsync();
 
-        // If response is not a a 500 internal server error return the content
+        // If response is not an 500 internal server error return the content
         if (response.StatusCode != HttpStatusCode.InternalServerError)
             return System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
 
         // Parse response
-        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ??
+        Error errorMessage = JsonSerializer.Deserialize<Error>(responseContent, JsonOptions.DefaultOptions) ??
                                     throw new LighthouseNotesErrors.ShouldNotBeNullException();
 
         // If error message is one about hashes display it
@@ -550,13 +524,13 @@ public class LighthouseNotesAPIGet
     }
 
     // GET: /case/?/shared/?/image
-    public async Task<string> SharedImage(string caseId, string type, string fileName)
+    public async Task<string> SharedFile(string caseId, string type, string fileName)
     {
         // Create request
         HttpRequestMessage request = new(HttpMethod.Get, $"/case/{caseId}/shared/{type}/image/{fileName}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -567,7 +541,7 @@ public class LighthouseNotesAPIGet
             if (response.StatusCode != HttpStatusCode.InternalServerError)
                 throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
 
-        // Read response 
+        // Read response
         string responseContent = await response.Content.ReadAsStringAsync();
 
         // If response is not a a 500 internal server error return the content
@@ -575,7 +549,7 @@ public class LighthouseNotesAPIGet
             return System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
 
         // Parse response
-        Models.Error errorMessage = JsonSerializer.Deserialize<Models.Error>(responseContent) ??
+        Error errorMessage = JsonSerializer.Deserialize<Error>(responseContent, JsonOptions.DefaultOptions) ??
                                     throw new LighthouseNotesErrors.ShouldNotBeNullException();
 
         // If error message is one about hashes display it
@@ -602,7 +576,7 @@ public class LighthouseNotesAPIGet
                 $"/case/{caseId}/exhibits?page={page}&pageSize={pageSize}&sort={sort}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -621,7 +595,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return (pagination, JsonSerializer.Deserialize<List<Exhibit>>(responseContent) ??
+        return (pagination, JsonSerializer.Deserialize<List<Exhibit>>(responseContent, JsonOptions.DefaultOptions) ??
                             throw new LighthouseNotesErrors.ShouldNotBeNullException());
     }
 
@@ -632,7 +606,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"/case/{caseId}/exhibit/{exhibitId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request and ensure response
@@ -644,7 +618,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<Exhibit>(responseContent) ??
+        return JsonSerializer.Deserialize<Exhibit>(responseContent, JsonOptions.DefaultOptions) ??
                throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
@@ -652,13 +626,13 @@ public class LighthouseNotesAPIGet
     // Export //
     ////////////
     // GET: /case/?/export
-    public async Task<string> Export(string caseId)
+    public async Task<Export> Export(string caseId)
     {
         // Create request
         HttpRequestMessage request = new(HttpMethod.Get, $"/case/{caseId}/export");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request
@@ -670,7 +644,8 @@ public class LighthouseNotesAPIGet
 
         // Read response and return unescaped string
         string responseContent = await response.Content.ReadAsStringAsync();
-        return System.Text.RegularExpressions.Regex.Unescape(responseContent).Replace("\"", "");
+        return JsonSerializer.Deserialize<Export>(responseContent, JsonOptions.DefaultOptions) ??
+               throw new LighthouseNotesErrors.ShouldNotBeNullException();
     }
 
     ///////////
@@ -683,7 +658,7 @@ public class LighthouseNotesAPIGet
         HttpRequestMessage request = new(HttpMethod.Get, $"/audit/user?page={page}&pageSize={pageSize}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request and ensure response
@@ -702,7 +677,7 @@ public class LighthouseNotesAPIGet
 
         // Read response and return parsed response
         string responseContent = await response.Content.ReadAsStringAsync();
-        return (pagination, JsonSerializer.Deserialize<List<UserAudit>>(responseContent) ??
+        return (pagination, JsonSerializer.Deserialize<List<UserAudit>>(responseContent, JsonOptions.DefaultOptions) ??
                             throw new LighthouseNotesErrors.ShouldNotBeNullException());
     }
 }

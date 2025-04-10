@@ -1,13 +1,15 @@
 using System.Reflection;
-using Auth0.AspNetCore.Authentication;
-using Auth0Net.DependencyInjection;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.AspNetCore.HttpOverrides;
-using MudBlazor.Services;
-using Syncfusion.Blazor;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
 using StackExchange.Redis;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using MudBlazor.Extensions;
+using Web.Components;
+using Web.Services.OidcCookie;
 
 // Version and copyright message
 Console.ForegroundColor = ConsoleColor.Cyan;
@@ -26,22 +28,29 @@ StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configurat
 
 // Add MVC controllers
 builder.Services.AddControllers();
+builder.Services.AddRazorPages();
 
 // Add standard razor services
-builder.Services.AddRazorPages(options => { options.RootDirectory = "/Components"; });
-builder.Services.AddServerSideBlazor();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+// Change signalRs maximum message size so we can upload large images
+builder.Services.AddSignalR(o =>
+{
+    o.MaximumReceiveMessageSize = 100000000; // bytes - 100mb
+});
 
 // Use Redis for key storage if running in production
 if (builder.Environment.IsProduction())
 {
     ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis") ??
                                                                 throw new InvalidOperationException(
-                                                                    "Connection string 'Redis' not found in appssettings.json or environment variable!"));
+                                                                    "Connection string 'Redis' not found in appsettings.json or environment variable!"));
     builder.Services.AddDataProtection()
         .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys");
 }
 
-// Add certificate forwarding for Nginx reverse proxy 
+// Add certificate forwarding for Nginx reverse proxy
 builder.Services.AddCertificateForwarding(options =>
 {
     options.CertificateHeader = "X-SSL-CERT";
@@ -52,48 +61,46 @@ builder.Services.AddCertificateForwarding(options =>
     };
 });
 
-// Add forward headers for reverse proxy 
+// Add forward headers for reverse proxy
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
         ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
-// Add Auth0 Authentication
-builder.Services.AddAuth0WebAppAuthentication(options =>
-{
-    options.Domain = builder.Configuration["Auth0:Domain"] ??
-                     throw new InvalidOperationException("Auth0:Domain not found in appsettings.json or environment variable!");
-    options.ClientId = builder.Configuration["Auth0:Auth:ClientId"] ??
-                       throw new InvalidOperationException("Auth0:Auth:ClientId not found in appsettings.json or environment variable!");
-    options.ClientSecret = builder.Configuration["Auth0:Auth:ClientSecret"];
-}).WithAccessToken(options =>
-{
-    options.Audience = builder.Configuration["Auth0:Auth:Audience"];
-    options.UseRefreshTokens = true;
-});
+// Add Oidc Authentication
+builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+    {
+        options.Authority = builder.Configuration["Authentication:Authority"];
+        options.ClientId = builder.Configuration["Authentication:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:ClientSecret"];
 
-// Add Auth0 Management API Authentication 
-builder.Services.AddAuth0AuthenticationClient(config =>
-{
-    config.Domain = builder.Configuration["Auth0:Domain"] ??
-                    throw new InvalidOperationException("Auth0:Domain not found in appsettings.json or environment variable!");
-    config.ClientId = builder.Configuration["Auth0:Management:ClientId"];
-    config.ClientSecret = builder.Configuration["Auth0:Management:ClientSecret"];
-});
+        options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.ResponseType = OpenIdConnectResponseType.Code;
 
-// Add Auth0 Management API
-builder.Services.AddAuth0ManagementClient().AddManagementAccessToken();
+        options.SaveTokens = true;
+        options.GetClaimsFromUserInfoEndpoint = true;
+        options.MapInboundClaims = true;
+
+        options.Scope.Add(OpenIdConnectScope.OfflineAccess);
+        options.Scope.Add(OpenIdConnectScope.OpenId);
+        options.Scope.Add(OpenIdConnectScope.Profile);
+        options.Scope.Add(OpenIdConnectScope.Email);
+    })
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
+
+// Configure cookie refresh
+builder.Services.ConfigureCookieOidcRefresh(CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme);
+
+// Add cascading authentication
+builder.Services.AddCascadingAuthenticationState();
 
 // Localization
 builder.Services.AddLocalization();
 
 // Add MudBlazor Services
-builder.Services.AddMudServices(option => { option.PopoverOptions.ThrowOnDuplicateProvider = false; });
-
-// Syncfusion
-builder.Services.AddSyncfusionBlazor();
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(builder.Configuration["Syncfusion:LicenseKey"]);
+builder.Services.AddMudServicesWithExtensions(option => { option.PopoverOptions.ThrowOnDuplicateProvider = false; });
 
 // Other services
 builder.Services.AddHttpContextAccessor();
@@ -107,14 +114,17 @@ builder.Services.AddScoped<LighthouseNotesAPIDelete>();
 
 // Services
 builder.Services.AddScoped<SpinnerService>();
-builder.Services.AddScoped<TokenProvider>();
+builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 
 // Build app
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) app.UseDeveloperExceptionPage();
+if (app.Environment.IsDevelopment())
+{
+   app.UseDeveloperExceptionPage();
+}
 
 if (app.Environment.IsProduction())
 {
@@ -123,24 +133,22 @@ if (app.Environment.IsProduction())
     app.UseForwardedHeaders();
 
     // Use exception handler
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler("/error");
 }
 
 // HTTPS Redirection
 app.UseHttpsRedirection();
+app.UseAntiforgery();
 
 // Static files
 app.UseStaticFiles();
 
-// Routing
-app.UseRouting();
-
-// Use Authentication and Authorization 
+// Use Authentication and Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Create a array of supported cultures
-string[] supportedCultures = { "en-US", "en-GB" };
+// Create an array of supported cultures
+string[] supportedCultures = ["en-US", "en-GB"];
 
 // Create localization options
 RequestLocalizationOptions localizationOptions = new RequestLocalizationOptions()
@@ -151,12 +159,19 @@ RequestLocalizationOptions localizationOptions = new RequestLocalizationOptions(
 // Use request localization and the options defined above
 app.UseRequestLocalization(localizationOptions);
 
-// Map MVC controllers 
+// Use Mud extensions middleware
+app.Use(MudExWebApp.MudExMiddleware);
+
+// Map MVC controllers
 app.MapControllers();
 
 // Map blazor pages and set fallback page
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+app.MapRazorPages();
+
+// Redirect to /error with the status code in the url if there is an error status code
+app.UseStatusCodePagesWithRedirects("/error/{0}");
 
 // Run app
 app.Run();

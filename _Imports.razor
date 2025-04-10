@@ -8,11 +8,17 @@
 @using Microsoft.JSInterop
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Authorization
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using System.Globalization
+@using System.Net
+@using System.Reflection
 
 @* Packages *@
 @using MudBlazor
-@using Syncfusion.Blazor
-@using Syncfusion.Blazor.RichTextEditor
+@using MudExRichTextEditor
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Components
+@using MudBlazor.Extensions.Components.ObjectEdit
 
 @* Project *@
 @using Web
@@ -22,6 +28,7 @@
 @using API = Web.Models.API
 
 @* Components *@
+@using Theme = Web.Components.Layout.Theme
 @using Web.Components
 @using Web.Components.Layout
 @using Web.Components.Layout.Main

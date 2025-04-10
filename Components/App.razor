@@ -1,62 +1,36 @@
-﻿@using Error = Web.Components.Pages.Error
-@using System.Net
-@inject TokenProvider TokenProvider
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <base href="/"/>
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
 
-<CascadingAuthenticationState>
-    <ErrorBoundary>
-        <ChildContent>
-            <Router AppAssembly="@typeof(App).Assembly">
-                @* Page found *@
-                <Found Context="routeData">
-                    <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                        <Authorizing>
-                            <MudText> Determining session state, please wait... </MudText>
-                        </Authorizing>
-                        <NotAuthorized>
-                            @* If user is not authenticated redirect to login *@
-                            @if (context.User.Identity!.IsAuthenticated == false)
-                            {
-                                <ReditectToLogin/>
-                            }
-                            @* Else the user is trying to access a page they do not have access to *@
-                            else
-                            {
-                                <LayoutView Layout="@typeof(ErrorLayout)">
-                                    <Error StatusCode="HttpStatusCode.Forbidden"></Error>
-                                </LayoutView>
-                            }
-                        </NotAuthorized>
-                    </AuthorizeRouteView>
-                </Found>
-                @* Not found *@
-                <NotFound >
-                    <LayoutView Layout="@typeof(ErrorLayout)">
-                        <Error StatusCode="HttpStatusCode.NotFound"></Error>
-                    </LayoutView>
-                </NotFound>
-            </Router>
-        </ChildContent>
-        @* Error handling  *@
-        <ErrorContent Context="ex">
-            <LayoutView Layout="@typeof(ErrorLayout)">
-                <Error StatusCode="HttpStatusCode.InternalServerError" Exception="ex"></Error>
-            </LayoutView>
-        </ErrorContent>
-    </ErrorBoundary>
-</CascadingAuthenticationState>
+    @* Google Fonts *@
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&display=swap"
+          rel="stylesheet">
 
+    @* MudBlazor *@
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet"/>
 
-@code {
+    @* Custom CSS *@
+    <link href="css/site.css" rel="stylesheet"/>
 
-    [Parameter] public InitialApplicationState? InitialState { get; set; }
+    @* Blazor Server Head *@
+    <HeadOutlet @rendermode="InteractiveServer"/>
+</head>
+<body>
 
-    // Page initialized
-    protected override void OnInitialized()
-    {
-        // Set token provider based on initial state
-        TokenProvider.AccessToken = InitialState?.AccessToken;
-        TokenProvider.RefreshToken = InitialState?.RefreshToken;
-        TokenProvider.XsrfToken = InitialState?.XsrfToken;
-    }
+@* Blazor Server Body *@
+<Routes @rendermode="InteractiveServer"/>
 
-}
+@* Blazor *@
+<script src="_framework/blazor.web.js"></script>
+
+@* MudBlazor *@
+<script src="_content/MudBlazor/MudBlazor.min.js"></script>
+
+@* HTML Editor *@
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+</body>
+</html>

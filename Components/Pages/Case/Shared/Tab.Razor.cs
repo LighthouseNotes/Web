@@ -1,45 +1,33 @@
 ﻿using HtmlAgilityPack;
-using MudBlazor;
-
 
 namespace Web.Components.Pages.Case.Shared;
 
 public class SharedTabBase : ComponentBase
 {
-    [Parameter] public required string CaseId { get; set; }
+    // Page load element
+    protected PageLoad? PageLoad;
 
-    [Parameter] public required string TabId { get; set; }
-
-    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
-
-    [Inject] private IDialogService Dialog { get; set; } = default!;
-
-    [Inject] private IConfiguration Configuration { get; set; } = default!;
-
-    [Inject] private ISettingsService SettingsService { get; set; } = default!;
-
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    // Settings
+    protected Settings Settings = null!;
 
     // API Objects
     protected API.SharedTab Tab = null!;
     protected API.Case SCase = null!;
-    private List<API.User> _caseUsers = new();
-    private List<API.Exhibit> _exhibits = new();
-
-    // Page load element 
-    protected PageLoad? PageLoad;
-
-    // Images
-    private string _imagePath = null!;
-    private string _imageSaveUrl = null!;
+    private List<API.User> _caseUsers = [];
+    private List<API.Exhibit> _exhibits = [];
 
     // Tab content
     protected (bool?, HtmlNode?) TabContent;
 
-    // Settings
-    protected Models.Settings Settings = new();
+    // Component parameters and dependency injection
+    [Parameter] public required string CaseId { get; set; }
+    [Parameter] public required string TabId { get; set; }
+    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = null!;
+    [Inject] private IDialogService Dialog { get; set; } = null!;
+    [Inject] private ISettingsService SettingsService { get; set; } = null!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
 
-    // On parameters set 
+    // Lifecycle method triggered when parameters are set or changed - get case, exhibits and tab content
     protected override async Task OnParametersSetAsync()
     {
         // Get case details
@@ -56,41 +44,33 @@ public class SharedTabBase : ComponentBase
         // Get tab details
         Tab = await LighthouseNotesAPIGet.SharedTab(CaseId, TabId);
 
-        // Set image save url
-        _imageSaveUrl = $"{Configuration["LighthouseNotesApiUrl"]}/case/{CaseId}/shared/tab/image";
-
         // Get tab content
         await GetTabContent();
-
-        // Mark page load as complete 
-        PageLoad?.LoadComplete();
 
         // Re-render component
         await InvokeAsync(StateHasChanged);
     }
 
-    // After page render
+    //  Lifecycle method called after the component has rendered - get settings
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // If settings is null the get the settings
-        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
-            Settings.S3Endpoint == null)
+        if (firstRender)
         {
-            // Get the settings redirect url
-            string? settingsRedirect = await SettingsService.CheckOrSet();
-            
-            // If the settings redirect url is not null then redirect 
-            if (settingsRedirect != null)
-            {
-                NavigationManager.NavigateTo(settingsRedirect, true);
-            }
-            
-            // Use the setting service to retrieve the settings
-            Settings = await SettingsService.Get();
+            // Call Check, Get or Set - to get the settings or a redirect url
+            (string?, Settings?) settingsCheckOrSetResult = await SettingsService.CheckGetOrSet();
 
-            // Set Image Path
-            _imagePath =
-                $"{Settings.S3Endpoint}/cases/{CaseId}/shared/tabs/images/";
+            // If a redirect url is provided then use it
+            if (settingsCheckOrSetResult.Item1 != null)
+            {
+                NavigationManager.NavigateTo(settingsCheckOrSetResult.Item1, true);
+                return;
+            }
+
+            // Set settings to the result
+            Settings = settingsCheckOrSetResult.Item2!;
+
+            // Mark page load as complete
+            PageLoad?.LoadComplete();
 
             // Re-render component
             await InvokeAsync(StateHasChanged);
@@ -116,43 +96,49 @@ public class SharedTabBase : ComponentBase
         // Load ContemporaneousNotes Content to HTML
         htmlDoc.LoadHtml(tabContent.Item2);
 
-        // If content contains images
-        if (htmlDoc.DocumentNode.SelectNodes("//img") != null)
+        // Get all image elements that start with ./path
+        // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+        IEnumerable<HtmlNode>? imagesWithPath = htmlDoc.DocumentNode
+            .SelectNodes("//img")
+            ?.Where(img => img.GetAttributeValue("src", "").Contains(".path/"));
+
+        // If we have image elements
+        if (imagesWithPath != null)
             // For each image that starts with .path/
-            foreach (HtmlNode img in htmlDoc.DocumentNode.SelectNodes("//img")
-                         .Where(u => u.Attributes["src"].Value.Contains(".path/")))
+            foreach (HtmlNode img in imagesWithPath)
             {
                 // Create variable with file name
                 string fileName = img.Attributes["src"].Value.Replace(".path/", "");
 
-                // Get presigned s3 url and update image src 
-                string presignedS3Url = await LighthouseNotesAPIGet.SharedImage(CaseId, "tab", fileName);
+                // Get presigned s3 url and update image src
+                string presignedS3Url =
+                    await LighthouseNotesAPIGet.SharedFile(CaseId, "tab", fileName);
                 img.Attributes["src"].Value = presignedS3Url;
             }
 
-        // Create a list of panels 
+
+        // Create a list of panels
         TabContent.Item1 = true;
         TabContent.Item2 = htmlDoc.DocumentNode;
     }
 
+    // User click - username clicked redirect to user details page
     protected void UserClick()
     {
-        NavigationManager.NavigateTo($"/user/{Tab.Creator.Id}", true);
+        NavigationManager.NavigateTo($"/user/{Tab.Creator.EmailAddress}", true);
     }
 
     // Open rich text editor dialog on edit content button clicked
     protected async Task OpenRichTextEditor()
     {
         // Create dialog parameters
-        DialogParameters<SharedTabRTEDialog> parameters = new()
+        DialogParameters<SharedTabTextEditorDialog> parameters = new()
         {
             { p => p.CaseId, CaseId },
             { p => p.TabId, TabId },
             { p => p.SCase, SCase },
             { p => p.CaseUsers, _caseUsers },
             { p => p.Exhibits, _exhibits },
-            { p => p.ImageSaveUrl, _imageSaveUrl },
-            { p => p.ImagePath, _imagePath },
             { p => p.TabContent, TabContent }
         };
 
@@ -160,14 +146,14 @@ public class SharedTabBase : ComponentBase
         DialogOptions options = new() { FullScreen = true, CloseButton = true };
 
         // Show dialog
-        IDialogReference? dialog =
-            await Dialog.ShowAsync<SharedTabRTEDialog>("Rich text editor", parameters, options);
+        IDialogReference dialog =
+            await Dialog.ShowAsync<SharedTabTextEditorDialog>("Rich text editor", parameters, options);
 
         // Await for dialog result
         DialogResult? result = await dialog.Result;
 
         // If result is not canceled, means tab content has been modified so get new content
-        if (!result.Canceled)
+        if (!result!.Canceled)
         {
             await GetTabContent();
             await InvokeAsync(StateHasChanged);

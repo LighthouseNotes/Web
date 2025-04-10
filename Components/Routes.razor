@@ -1,0 +1,33 @@
+﻿<ErrorBoundary>
+    <ChildContent>
+        <Router AppAssembly="@typeof(App).Assembly">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <Authorizing>
+                        <MudText> Determining session state, please wait...</MudText>
+                    </Authorizing>
+                    <NotAuthorized>
+                        @* If user is not authenticated redirect to login *@
+                        @if (context.User.Identity!.IsAuthenticated == false)
+                        {
+                            <RedirectToLogin/>
+                        }
+                        @* Else the user is trying to access a page they do not have access to *@
+                        else
+                        {
+                            <LayoutView Layout="@typeof(ErrorLayout)">
+                                <Error StatusCode="HttpStatusCode.Forbidden"></Error>
+                            </LayoutView>
+                        }
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+            </Found>
+        </Router>
+    </ChildContent>
+    @* Error handling  *@
+    <ErrorContent Context="ex">
+        <LayoutView Layout="@typeof(ErrorLayout)">
+            <Error StatusCode="HttpStatusCode.InternalServerError" Exception="ex"></Error>
+        </LayoutView>
+    </ErrorContent>
+</ErrorBoundary>

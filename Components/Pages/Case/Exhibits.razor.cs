@@ -1,13 +1,20 @@
 ﻿using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Components.Forms;
-using MudBlazor;
-using Web.Models;
 
 namespace Web.Components.Pages.Case;
 
 public class ExhibitsBase : ComponentBase
 {
+    // Class variables
+    private readonly ReadOnlyCollection<TimeZoneInfo> _timeZones = TimeZoneInfo.GetSystemTimeZones();
+    protected MudDataGrid<API.Exhibit> ExhibitsTable = null!;
+    protected AddExhibit Model = new();
+
+    // Page variables
+    protected PageLoad? PageLoad;
+    protected API.Case SCase = null!;
+    protected Settings Settings = null!;
+
+    // Component parameters and dependency injection
     [Parameter] public required string CaseId { get; set; }
     [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
     [Inject] private LighthouseNotesAPIPost LighthouseNotesAPIPost { get; set; } = default!;
@@ -15,70 +22,43 @@ public class ExhibitsBase : ComponentBase
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
-    // Page variables
-    protected PageLoad? PageLoad;
-    protected API.Case SCase = null!;
-    protected AddExhibit Model = new();
-    protected Settings Settings = new();
-    protected MudDataGrid<API.Exhibit> ExhibitsTable = null!;
-
-    // Class variables
-    private readonly ReadOnlyCollection<TimeZoneInfo> _timeZones = TimeZoneInfo.GetSystemTimeZones();
-
-    // Add exhibit form
-    protected class AddExhibit
-    {
-        [Required] public string Reference { get; set; } = null!;
-
-        [Required] public string Description { get; set; } = null!;
-
-        [Required] public DateTime? DateSeizedProduced { get; set; }
-
-        [Required] public TimeSpan? TimeSeizedProduced { get; set; }
-
-        [Required] public TimeZoneInfo TimeZone { get; set; } = null!;
-
-        [Required] public string WhereSeizedProduced { get; set; } = null!;
-
-        [Required] public string SeizedBy { get; set; } = null!;
-    }
-
-    // On parameters set 
+    // Lifecycle method triggered when parameters are set or changed - get case details
     protected override async Task OnParametersSetAsync()
     {
         // Get case, exhibits and users from API
         SCase = await LighthouseNotesAPIGet.Case(CaseId);
 
-        // Mark page load as complete 
-        PageLoad?.LoadComplete();
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
     }
 
-    // After page render
+    // Lifecycle method called after the component has rendered - get settings
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // If settings is null the get the settings
-        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
-            Settings.S3Endpoint == null)
+        if (firstRender)
         {
-            // Get the settings redirect url
-            string? settingsRedirect = await SettingsService.CheckOrSet();
-            
-            // If the settings redirect url is not null then redirect 
-            if (settingsRedirect != null)
-            {
-                NavigationManager.NavigateTo(settingsRedirect, true);
-            }
-            
-            // Use the setting service to retrieve the settings
-            Settings = await SettingsService.Get();
+            // Call Check, Get or Set - to get the settings or a redirect url
+            (string?, Settings?) settingsCheckOrSetResult = await SettingsService.CheckGetOrSet();
 
-            Model.TimeZone = TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone);
+            // If a redirect url is provided then use it
+            if (settingsCheckOrSetResult.Item1 != null)
+            {
+                NavigationManager.NavigateTo(settingsCheckOrSetResult.Item1, true);
+                return;
+            }
+
+            // Set settings to the result
+            Settings = settingsCheckOrSetResult.Item2!;
+
+            // Mark page load as complete
+            PageLoad?.LoadComplete();
 
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
     }
 
+    // Load exhibits data grid and handle sort strings
     protected async Task<GridData<API.Exhibit>> LoadGridData(GridState<API.Exhibit> state)
     {
         // Create sort string
@@ -106,10 +86,10 @@ public class ExhibitsBase : ComponentBase
         return data;
     }
 
-    // On valid form submission
+    // On valid form submission - call API to add exhibit
     protected async Task OnValidSubmit(EditContext context)
     {
-        // Get user timezone 
+        // Get user timezone
         TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById(Model.TimeZone.Id);
 
         // Parse date time from form
@@ -145,12 +125,30 @@ public class ExhibitsBase : ComponentBase
         Snackbar.Add("Successfully created the exhibit!", Severity.Success);
     }
 
-    // Time zone search 
-    protected Task<IEnumerable<TimeZoneInfo>> TimeZoneSearch(string value)
+    // Time zone search - search all .NET timezones
+    protected Task<IEnumerable<TimeZoneInfo>> TimeZoneSearch(string value, CancellationToken token)
     {
-        // If text is null or empty, show complete list else return match for timezone 
+        // If text is null or empty, show complete list else return match for timezone
         return Task.FromResult(string.IsNullOrEmpty(value)
             ? _timeZones
             : _timeZones.Where(x => x.DisplayName.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
+    }
+
+    // Add exhibit form
+    protected class AddExhibit
+    {
+        [Required] public string Reference { get; set; } = null!;
+
+        [Required] public string Description { get; set; } = null!;
+
+        [Required] public DateTime? DateSeizedProduced { get; set; }
+
+        [Required] public TimeSpan? TimeSeizedProduced { get; set; }
+
+        [Required] public TimeZoneInfo TimeZone { get; set; } = null!;
+
+        [Required] public string WhereSeizedProduced { get; set; } = null!;
+
+        [Required] public string SeizedBy { get; set; } = null!;
     }
 }

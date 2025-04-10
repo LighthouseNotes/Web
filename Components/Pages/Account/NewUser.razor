@@ -1,14 +1,17 @@
 @page "/account/new-user"
 @inherits NewUserBase
-@attribute [Authorize(Roles = "user")]
-<Page>
-    <MudText Typo="Typo.h1" Align="Align.Center"> New User </MudText>
+@attribute [Authorize]
+<PageTitle> New User </PageTitle>
+<PageLoad @ref="PageLoad">
+    <MudText Typo="Typo.h1" Align="Align.Center"> New User</MudText>
 
     <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
         <DataAnnotationsValidator/>
         <MudStack>
             <div>
-                <MudText Typo="Typo.subtitle1" Align="Align.Center"> Lighthouse notes needs to collect some more information before your signup is complete </MudText>
+                <MudText Typo="Typo.subtitle1" Align="Align.Center"> Lighthouse notes needs to collect some more
+                    information before your signup is complete
+                </MudText>
             </div>
             <MudGrid Class="justify-center">
                 <MudItem xs="12" sm="7">
@@ -21,16 +24,19 @@
                             <MudTextField Label="Display name"
                                           @bind-Value="Model.DisplayName" For="@(() => Model.DisplayName)"/>
                             <MudTextField Label="Email address"
-                                          @bind-Value="Model.EmailAddress" For="@(() => Model.EmailAddress)" Disabled="true"/>
+                                          @bind-Value="Model.EmailAddress" For="@(() => Model.EmailAddress)"
+                                          Disabled="true"/>
                             <MudTextField Label="Job title"
                                           @bind-Value="Model.JobTitle" For="@(() => Model.JobTitle)"/>
                         </MudCardContent>
                         <MudCardActions>
-                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto"> Submit </MudButton>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                                       Class="ml-auto"> Create Account
+                            </MudButton>
                         </MudCardActions>
                     </MudCard>
                 </MudItem>
             </MudGrid>
         </MudStack>
     </EditForm>
-</Page>
+</PageLoad>

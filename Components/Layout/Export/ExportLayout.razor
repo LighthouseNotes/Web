@@ -1,0 +1,12 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="_lighthouseNotesTheme"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+@Body
+
+@code {
+    private readonly MudTheme _lighthouseNotesTheme = Theme.LighthouseNotesTheme;
+}

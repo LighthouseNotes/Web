@@ -6,25 +6,39 @@ namespace Web.Components.Pages;
 
 public class ErrorBase : ComponentBase
 {
-    [Parameter] public Exception? Exception { get; set; }
-    [Parameter] public required HttpStatusCode StatusCode { get; set; }
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-    [Inject] private TokenProvider TokenProvider { get; set; } = default!;
-
-    private string _loginUrl = "/account/login?returnUrl=/";
+    // Class variables
     private string _currentUrl = "/";
+    private string _loginUrl = "/auth/login?returnUrl=/";
 
+    // Page variables
     protected string? Title;
     protected string? Description;
     protected bool LoginExpired;
 
-    // On parameters set 
+    // Component parameters and dependency injection
+    [Parameter] public Exception? Exception { get; set; }
+    [Parameter] public HttpStatusCode? StatusCode { get; set; }
+    [Parameter] public string? UrlStatusCode { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+    [Inject] private TokenService TokenService { get; set; } = null!;
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    // Lifecycle method triggered when parameters are set or changed - handle error messages
     protected override async Task OnParametersSetAsync()
     {
+        if (UrlStatusCode == null && StatusCode == null && Exception == null)
+        {
+            Snackbar.Add("No error is provided!", Severity.Error);
+            return;
+        }
+
+        // If a status code is provided in the url then parse it as an HTTP Status code
+        if (UrlStatusCode != null) StatusCode = (HttpStatusCode)int.Parse(UrlStatusCode);
+
         // If status code is 404 Not Found or 403 Forbidden then return
         if (StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden) return;
 
-        // Check exception type 
+        // Check exception type
         switch (Exception)
         {
             case LighthouseNotesErrors.LighthouseNotesApiException exceptionDetails:
@@ -59,10 +73,11 @@ public class ErrorBase : ComponentBase
         {
             // Create JWT handler and read token
             JwtSecurityTokenHandler handler = new();
-            JwtSecurityToken? jsonToken = handler.ReadToken(TokenProvider.AccessToken) as JwtSecurityToken;
+            JwtSecurityToken? jsonToken = handler.ReadToken(TokenService.GetAccessToken()) as JwtSecurityToken;
+            JwtPayload? payload = jsonToken?.Payload;
 
             // Get expiration date time
-            int? expiration = jsonToken?.Payload.Exp;
+            long? expiration = payload?.Expiration;
 
             // Check if the token is expired
             if (expiration.HasValue)
@@ -73,17 +88,13 @@ public class ErrorBase : ComponentBase
                 if (expirationDateTime <= DateTime.UtcNow) LoginExpired = true;
             }
         }
-    }
 
-    // On initialized 
-    protected override void OnInitialized()
-    {
         // Get current url as an escaped string
         _currentUrl = Uri.EscapeDataString(new Uri(NavigationManager.Uri)
             .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped));
 
         // Create login url with redirect ulr to the current page
-        _loginUrl = $"/account/login?returnUrl={_currentUrl}";
+        _loginUrl = $"/auth/login?returnUrl={_currentUrl}";
     }
 
     // Login link clicked

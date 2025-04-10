@@ -1,14 +1,13 @@
-﻿@page "/user/{UserId}"
-@using System.Globalization
+﻿@page "/user/{EmailAddress}"
 @inherits UserBase
-@attribute [Authorize(Roles = "user")]
+@attribute [Authorize]
 <PageLoad @ref="PageLoad">
     <PageTitle> @User.DisplayName </PageTitle>
 
     @* User details *@
     <MudGrid class="justify-center my-3">
         <MudItem xs="12" sm="6" md="5" xxl="5">
-            <MudCard>
+            <MudCard Class="mud-theme-secondary">
                 <MudCardHeader>
                     <CardHeaderAvatar>
                         <MudAvatar>
@@ -27,27 +26,8 @@
                         <b> Email Address: </b> @User.EmailAddress
                     </MudText>
                     <MudText>
-                        <b> Organization: </b> @User.Organization.DisplayName
-                    </MudText>
-                    <MudText>
                         <b> Job Title: </b> @User.JobTitle
                     </MudText>
-                    <MudText>
-                        <b> Roles: </b>
-                    </MudText>
-                    <MudChipSet>
-                        @foreach (string role in User.Roles)
-                        {
-                            if (role == "sio")
-                            {
-                                <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToUpper(role) </MudChip>
-                            }
-                            else
-                            {
-                                <MudChip> @CultureInfo.CurrentUICulture.TextInfo.ToTitleCase(role) </MudChip>
-                            }
-                        }
-                    </MudChipSet>
                 </MudCardContent>
             </MudCard>
         </MudItem>

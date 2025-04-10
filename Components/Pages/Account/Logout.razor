@@ -1,0 +1,22 @@
+﻿@page "/account/logout"
+@inherits LogoutBase
+<PageTitle> Logout </PageTitle>
+<MudGrid>
+    <MudItem xs="12">
+        <div class="d-flex align-center justify-center mud-width-full py-8">
+            <MudText Align="Align.Center" Typo="Typo.h1" Style="text-decoration: underline;">You have been successfully
+                logged out!
+            </MudText>
+        </div>
+    </MudItem>
+    <MudItem xs="12">
+        <div class="d-flex justify-center mud-width-full">
+            <MudText Align="Align.Center" Typo="Typo.body1">To log in again, click or tap the button below:</MudText>
+        </div>
+    </MudItem>
+    <MudItem xs="12">
+        <div class="d-flex justify-center mud-width-full">
+            <MudButton OnClick="@LoginClick" Variant="Variant.Filled" Color="Color.Primary">Login</MudButton>
+        </div>
+    </MudItem>
+</MudGrid>

@@ -1,15 +1,15 @@
-﻿@page "/error"
-@using System.Net
+﻿@page "/error/{UrlStatusCode}"
 @inherits ErrorBase
+@layout ErrorLayout
 
 @* 403 Forbidden *@
 @* ReSharper disable once ConvertIfStatementToSwitchStatement *@
 @if (StatusCode == HttpStatusCode.Forbidden)
 {
-    <PageTitle> Forbidden </PageTitle>
+    <PageTitle> Forbidden</PageTitle>
     <div class="d-flex justify-center ">
         <div>
-            <MudText Typo="Typo.h1"> Forbidden </MudText>
+            <MudText Typo="Typo.h1"> Forbidden</MudText>
             <MudText>You do not have access to the requested page</MudText>
         </div>
         <div class="picture">
@@ -20,10 +20,10 @@
 @* 404 Not found *@
 else if (StatusCode == HttpStatusCode.NotFound)
 {
-    <PageTitle> Not Found </PageTitle>
+    <PageTitle> Not Found</PageTitle>
     <div class="d-flex justify-center ">
         <div>
-            <MudText Typo="Typo.h1"> Not found </MudText>
+            <MudText Typo="Typo.h1"> Not found</MudText>
             <MudText>The server can not find the requested page</MudText>
         </div>
         <div class="picture">
@@ -34,12 +34,12 @@ else if (StatusCode == HttpStatusCode.NotFound)
 @* Login expired *@
 else if (LoginExpired)
 {
-    <PageTitle> Login Expired </PageTitle>
+    <PageTitle> Login Expired</PageTitle>
     <div class="d-flex justify-center ">
         <div>
-            <MudText Typo="Typo.h1"> Login Expired </MudText>
-            <MudText> Your login has expired, please login again! </MudText>
-            <MudButton OnClick="@LoginClick" Variant="Variant.Filled" Color="Color.Primary"> Login </MudButton>
+            <MudText Typo="Typo.h1"> Login Expired</MudText>
+            <MudText> Your login has expired, please login again!</MudText>
+            <MudButton OnClick="@LoginClick" Variant="Variant.Filled" Color="Color.Primary"> Login</MudButton>
         </div>
         <div class="picture">
             <ErrorImage StatusCode="401"></ErrorImage>
@@ -49,7 +49,7 @@ else if (LoginExpired)
 @* Unknown error *@
 else
 {
-    <PageTitle> Error </PageTitle>
+    <PageTitle> Error</PageTitle>
     <div class="d-flex justify-center ">
         <div>
             <MudText Typo="Typo.h1"> @Title </MudText>

@@ -1,35 +1,28 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Components.Forms;
-using MudBlazor;
-
-namespace Web.Components.Pages.Case;
+﻿namespace Web.Components.Pages.Case;
 
 public class CaseBase : ComponentBase
 {
-    [Parameter] public required string CaseId { get; set; }
-    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
-    [Inject] private LighthouseNotesAPIPut LighthouseNotesAPIPut { get; set; } = default!;
-    [Inject] private LighthouseNotesAPIDelete LighthouseNotesAPIDelete { get; set; } = default!;
-    [Inject] private ISnackbar Snackbar { get; set; } = default!;
-    [Inject] private IJSRuntime JS { get; set; } = default!;
-    [Inject] private ISettingsService SettingsService { get; set; } = default!;
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-
-    // Page variables
-    protected API.Case SCase = null!;
-    protected Models.Settings Settings = new();
-    protected PageLoad? PageLoad;
-    protected AddCaseUserForm Model = new();
-
     // Class variables
     private List<API.User> _users = null!;
 
-    protected class AddCaseUserForm
-    {
-        [Required] public IEnumerable<API.User> Users { get; set; } = null!;
-    }
+    // Page variables
+    protected API.Case SCase = null!;
+    protected Settings Settings = null!;
+    protected MudAutocomplete<API.User> CaseUsersAutoComplete = null!;
+    protected AddCaseUserForm Model = new();
+    protected PageLoad? PageLoad;
 
-    // On parameters set 
+    // Component parameters and dependency injection
+    [Parameter] public required string CaseId { get; set; }
+    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = null!;
+    [Inject] private LighthouseNotesAPIPut LighthouseNotesAPIPut { get; set; } = null!;
+    [Inject] private LighthouseNotesAPIDelete LighthouseNotesAPIDelete { get; set; } = null!;
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
+    [Inject] private IJSRuntime JS { get; set; } = null!;
+    [Inject] private ISettingsService SettingsService { get; set; } = null!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+    // Lifecycle method triggered when parameters are set or changed - get case details adn all users
     protected override async Task OnParametersSetAsync()
     {
         // Get case details
@@ -39,64 +32,73 @@ public class CaseBase : ComponentBase
         (API.Pagination, List<API.User>) usersWithPagination = await LighthouseNotesAPIGet.Users(1, 0);
         _users = usersWithPagination.Item2;
 
-        // Mark page load as complete 
-        PageLoad?.LoadComplete();
-
-        // Re-render component
-        await InvokeAsync(StateHasChanged);
+        // Remove any users already added to the case from the drop-down
+        SCase.Users.ForEach(user => _users.RemoveAll(u => u.EmailAddress == user.EmailAddress));
     }
 
-    // After page render
+    //  Lifecycle method called after the component has rendered - get settings
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // If settings is null the get the settings
-        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
-            Settings.S3Endpoint == null)
+        if (firstRender)
         {
-            // Get the settings redirect url
-            string? settingsRedirect = await SettingsService.CheckOrSet();
-            
-            // If the settings redirect url is not null then redirect 
-            if (settingsRedirect != null)
+            // Call Check, Get or Set - to get the settings or a redirect url
+            (string?, Settings?) settingsCheckOrSetResult = await SettingsService.CheckGetOrSet();
+
+            // If a redirect url is provided then use it
+            if (settingsCheckOrSetResult.Item1 != null)
             {
-                NavigationManager.NavigateTo(settingsRedirect, true);
+                NavigationManager.NavigateTo(settingsCheckOrSetResult.Item1, true);
+                return;
             }
-            
-            // Use the setting service to retrieve the settings
-            Settings = await SettingsService.Get();
+
+            // Set settings to the result
+            Settings = settingsCheckOrSetResult.Item2!;
+
+            // Mark page load as complete
+            PageLoad?.LoadComplete();
 
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
     }
 
-    // Delete user button clicked
-    protected async Task DeleteClick(string userId)
+    // Delete user button clicked - remove user from case
+    protected async Task DeleteClick(string emailAddress)
     {
+        // Show an error and stop execution if trying to remove the lead investigator
+        if (SCase.LeadInvestigator.EmailAddress == emailAddress)
+        {
+            Snackbar.Add("Can not remove the lead investigator!", Severity.Error);
+            return;
+        }
+
         // Call the API
-        await LighthouseNotesAPIDelete.CaseUser(CaseId, userId);
+        await LighthouseNotesAPIDelete.CaseUser(CaseId, emailAddress);
 
         // Show a success message
         Snackbar.Add("Successfully removed the user!", Severity.Success);
 
-        // Update client side case user list to reflect the remove user 
-        SCase.Users = SCase.Users.Where(u => u.Id != userId).ToList();
+        // Update client side case user list to reflect the remove user
+        SCase.Users = SCase.Users.Where(u => u.EmailAddress != emailAddress).ToList();
 
         // Re-render component
         await InvokeAsync(StateHasChanged);
     }
 
-    // On valid submit
+    // On valid submit - call API to add user to the case
     protected async Task OnValidSubmit(EditContext context)
     {
+        // Update the model to only contain valid users
+        Model.Users = Model.Users.OfType<API.User>().ToList();
+
         // For each user call the API
-        foreach (API.User user in Model.Users) await LighthouseNotesAPIPut.CaseUser(CaseId, user.Id);
+        foreach (API.User user in Model.Users) await LighthouseNotesAPIPut.CaseUser(CaseId, user.EmailAddress);
 
         // Show a success message
         Snackbar.Add("Successfully added user(s) to the case!", Severity.Success);
 
         // Empty selection
-        Model.Users = new List<API.User>();
+        Model.Users = [];
 
         // Get updated case details
         SCase = await LighthouseNotesAPIGet.Case(CaseId);
@@ -108,23 +110,49 @@ public class CaseBase : ComponentBase
         await InvokeAsync(StateHasChanged);
     }
 
-    // Export button clicked
+    // Export button clicked - open export page in new tab
     protected async Task ExportClick()
     {
-        // Call api export and get S3 presigned Url 
-        string url = await LighthouseNotesAPIGet.Export(CaseId);
-
-        // Open url in new tab
-        await JS.InvokeVoidAsync("open", url, "_blank");
+        // Open export page in new tab
+        await JS.InvokeVoidAsync("open", $"/case/{CaseId}/export", "_blank");
     }
 
-    // User search function
-    protected async Task<IEnumerable<API.User>> UserSearchFunc(string search)
+    // User search function - search users by name, last name and display name
+    protected async Task<IEnumerable<API.User>> UserSearchFunc(string search, CancellationToken token)
     {
         if (string.IsNullOrEmpty(search)) return _users;
         return await Task.FromResult(_users.Where(x =>
             x.GivenName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
             x.LastName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
             x.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    // User selected - add to case users and remove from dropdown
+    protected async Task UserSelected(API.User user)
+    {
+        // Add the user to case users
+        Model.Users.Add(user);
+
+        // Remove user from drop down
+        _users.Remove(user);
+
+        // Clear and close dropdown
+        await CaseUsersAutoComplete.ClearAsync();
+    }
+
+    // User removed - chip x clicked so remove user
+    protected void UserRemoved(MudChip<API.User> chip)
+    {
+        // Remove the user from case users
+        Model.Users.Remove(chip.Value!);
+
+        // Add the user back to drop down
+        _users.Add(chip.Value!);
+    }
+
+    // Form
+    protected class AddCaseUserForm
+    {
+        [Required] public List<API.User> Users { get; set; } = [];
     }
 }

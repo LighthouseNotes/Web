@@ -8,9 +8,9 @@ namespace Web.Services.API;
 public class LighthouseNotesAPIPut
 {
     private readonly HttpClient _http;
-    private readonly TokenProvider _tokenProvider;
+    private readonly TokenService _tokenService;
 
-    public LighthouseNotesAPIPut(IHttpClientFactory clientFactory, TokenProvider tokenProvider,
+    public LighthouseNotesAPIPut(IHttpClientFactory clientFactory, TokenService tokenService,
         IConfiguration configuration)
     {
         // Create http client
@@ -20,7 +20,7 @@ public class LighthouseNotesAPIPut
         _http.BaseAddress = new Uri($"{configuration["LighthouseNotesApiUrl"]}/");
 
         // Set token provider
-        _tokenProvider = tokenProvider;
+        _tokenService = tokenService;
     }
 
     // PUT: /case/?
@@ -31,7 +31,7 @@ public class LighthouseNotesAPIPut
             $"case/{caseId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
@@ -54,30 +54,7 @@ public class LighthouseNotesAPIPut
             $"user/{userId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
-        request.Headers.Add("Authorization", $"Bearer {token}");
-
-        // Add data to request body with JSON type
-        request.Content = new StringContent(JsonSerializer.Serialize(content), Encoding.UTF8);
-        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-
-        // Send request
-        HttpResponseMessage response = await _http.SendAsync(request);
-
-        // If response is not a success status code, throw exception
-        if (!response.IsSuccessStatusCode)
-            throw new LighthouseNotesErrors.LighthouseNotesApiException(request, response);
-    }
-
-    // PUT: /organization/settings
-    public async Task Settings(OrganizationSettings content)
-    {
-        // Create request
-        HttpRequestMessage request = new(HttpMethod.Put,
-            "organization/settings");
-
-        // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
@@ -100,7 +77,7 @@ public class LighthouseNotesAPIPut
             "user/settings");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Add data to request body with JSON type
@@ -122,7 +99,7 @@ public class LighthouseNotesAPIPut
         HttpRequestMessage request = new(HttpMethod.Put, $"/case/{caseId}/user/{userId}");
 
         // Add Bearer token
-        string? token = _tokenProvider.AccessToken;
+        string? token = _tokenService.GetAccessToken();
         request.Headers.Add("Authorization", $"Bearer {token}");
 
         // Send request

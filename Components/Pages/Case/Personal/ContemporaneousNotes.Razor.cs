@@ -1,157 +1,153 @@
 ﻿using System.Text;
+using System.Text.Json;
+using System.Web;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Components.Routing;
-using MudBlazor;
-using Syncfusion.Blazor.RichTextEditor;
 
 namespace Web.Components.Pages.Case.Personal;
 
 public class ContemporaneousNotesBase : ComponentBase
 {
-    [Parameter] public required string CaseId { get; set; }
+    // Text Editor Variables
+    protected readonly QuillTool[] Tools =
+    [
+        new("ql-header", group: 1, options: ["", "1", "2", "3", "4", "5", "6"]),
+        new("ql-bold", group: 2),
+        new("ql-italic", group: 2),
+        new("ql-underline", group: 2),
+        new("ql-strike", group: 2),
+        new("ql-color", group: 3, options: []),
+        new("ql-background", group: 3, options: []),
+        new("ql-list", group: 4, value: "ordered"),
+        new("ql-list", group: 4, value: "bullet"),
+        new("ql-indent", group: 4, value: "-1"),
+        new("ql-indent", group: 4, value: "+1"),
+        new("ql-align", group: 4, options: ["", "center", "right", "justify"]),
+        new("ql-blockquote", group: 5),
+        new("ql-code-block", group: 5),
+        new("ql-link", group: 6),
+        new("ql-image", group: 6)
+    ];
 
-    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = default!;
-
-    [Inject] private LighthouseNotesAPIPost LighthouseNotesAPIPost { get; set; } = default!;
-
-    [Inject] private TokenProvider TokenProvider { get; set; } = default!;
-
-    [Inject] private ISnackbar Snackbar { get; set; } = default!;
-
-    [Inject] private IDialogService Dialog { get; set; } = default!;
-
-    [Inject] private IConfiguration Configuration { get; set; } = default!;
-
-    [Inject] private ISettingsService SettingsService { get; set; } = default!;
-    
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-
-    // Contemporaneous Notes Expansion Panel Variables
-    private protected static MudExpansionPanels? ContemporaneousNotesCollapse;
-    protected string ToggleCollapsed = "Expand all";
+    protected IQuillModule[] Modules = null!;
+    protected MudExRichTextEdit TextEditor = null!;
 
     // Contemporaneous Notes
-    private Dictionary<DateTime, string>? _contemporaneousNotes; // Default contemporaneous notes with no filtering
+    private List<API.ContemporaneousNotes>
+        _allContemporaneousNotes = new(); // List of all contemporaneous notes with note id and created date
+
     protected Dictionary<DateTime, string>? ContemporaneousNotes; // Contemporaneous notes displayed on the page
+    private Dictionary<DateTime, string>? _contemporaneousNotes; // Default contemporaneous notes with no filtering
+
+    // Pagination
+    private int _page = 1;
+    protected int Pages = 1;
+    protected int PageSize = 10;
+
+    // Contemporaneous Notes Expansion Panel Variables
+    protected MudExpansionPanels? ContemporaneousNotesCollapse;
     protected bool? HasContemporaneousNotes;
+    protected string ToggleCollapseValue = "Expand all";
 
     // Date Filter and search query
     protected DateRange FilterDateRange = new(null, null);
     protected string SearchQuery = "";
 
-    // Images
-    protected string ImageSaveUrl = null!;
-    protected string ImagePath = null!;
-
-    // Page load element 
+    // Page load element
     protected PageLoad? PageLoad;
-
-    // RichText Editor Variables
-    protected string? RteValue;
-    protected string ToggleUserMention = "Exhibit mention";
 
     // API Objects
     protected API.Case SCase = null!;
-    protected List<API.User> CaseUsers = new();
-    protected List<API.Exhibit> Exhibits = new();
-
-    private List<API.ContemporaneousNotes>
-        _allContemporaneousNotes = new(); // List of all contemporaneous notes with note id and created date
+    private List<API.User> _caseUsers = [];
+    private List<API.Exhibit> _exhibits = [];
 
     // Settings
-    protected Models.Settings Settings = new();
+    protected Settings Settings = null!;
 
-    // Pagination
-    private int _page = 1;
-    protected int PageSize = 10;
-    protected int Pages = 1;
+    // Component parameters and dependency injection
+    [Parameter] public required string CaseId { get; set; }
+    [Inject] private LighthouseNotesAPIGet LighthouseNotesAPIGet { get; set; } = null!;
+    [Inject] private LighthouseNotesAPIPost LighthouseNotesAPIPost { get; set; } = null!;
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
+    [Inject] private IDialogService Dialog { get; set; } = null!;
+    [Inject] private ISettingsService SettingsService { get; set; } = null!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
 
-    // On parameters set 
+    // Lifecycle method triggered when parameters are set or changed - gets case details, exhibits, sets modules and get notes
     protected override async Task OnParametersSetAsync()
     {
         // Get case details
         SCase = await LighthouseNotesAPIGet.Case(CaseId);
 
         // Set users from case details
-        CaseUsers = SCase.Users.ToList();
+        _caseUsers = SCase.Users.ToList();
 
         // Get exhibits linked to case
         (API.Pagination, List<API.Exhibit>?)
             exhibitsWithPagination = await LighthouseNotesAPIGet.Exhibits(CaseId, 1, 0);
-        Exhibits = exhibitsWithPagination.Item2!;
+        _exhibits = exhibitsWithPagination.Item2!;
 
-        // Set image save url
-        ImageSaveUrl = $"{Configuration["LighthouseNotesApiUrl"]}/case/{CaseId}/contemporaneous-note/image";
+        // Set mention modules
+        Modules =
+        [
+            new QuillMentionModule<API.User>(
+                    (_, s) => Task.FromResult(_caseUsers.Where(u =>
+                        u.DisplayName.Contains(s, StringComparison.InvariantCultureIgnoreCase))), '@')
+                .SetProperties(m => m.MentionClicked = UserMentionClicked),
+            new QuillMentionModule<API.Exhibit>(
+                    (_, s) => Task.FromResult(_exhibits.Where(e =>
+                        e.Reference.Contains(s, StringComparison.InvariantCultureIgnoreCase))), '#')
+                .SetProperties(m => m.MentionClicked = ExhibitMentionClicked)
+        ];
 
-        // Get contemporaneous notes 
+        // Get contemporaneous notes
         await GetNotes();
-
-        // Mark page load as complete 
-        PageLoad?.LoadComplete();
 
         // Re-render component
         await InvokeAsync(StateHasChanged);
     }
 
-    // After page render
+    // Lifecycle method called after the component has rendered - get settings
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // If settings is null the get the settings
-        if (Settings.Auth0UserId == null || Settings.OrganizationId == null || Settings.UserId == null ||
-            Settings.S3Endpoint == null)
+        if (firstRender)
         {
-            // Get the settings redirect url
-            string? settingsRedirect = await SettingsService.CheckOrSet();
-            
-            // If the settings redirect url is not null then redirect 
-            if (settingsRedirect != null)
-            {
-                NavigationManager.NavigateTo(settingsRedirect, true);
-            }
-            
-            // Use the setting service to retrieve the settings
-            Settings = await SettingsService.Get();
+            // Call Check, Get or Set - to get the settings or a redirect url
+            (string?, Settings?) settingsCheckOrSetResult = await SettingsService.CheckGetOrSet();
 
-            // Set Image Path
-            ImagePath =
-                $"{Settings.S3Endpoint}/cases/{CaseId}/{Settings.UserId}/contemporaneous-notes/images/";
+            // If a redirect url is provided then use it
+            if (settingsCheckOrSetResult.Item1 != null)
+            {
+                NavigationManager.NavigateTo(settingsCheckOrSetResult.Item1, true);
+                return;
+            }
+
+            // Set settings to the result
+            Settings = settingsCheckOrSetResult.Item2!;
+
+            // Mark page load as complete
+            PageLoad?.LoadComplete();
 
             // Re-render component
             await InvokeAsync(StateHasChanged);
         }
     }
 
-    // Add authorization header before image upload request
-    protected void BeforeImageUpload(ImageUploadingEventArgs args)
+    // On upload - use API to upload the image and return presigned url
+    protected async Task<string> OnUpload(UploadableFile arg)
     {
-        // Add bearer token to request
-        args.CurrentRequest = new List<object> { new { Authorization = $"Bearer {TokenProvider.AccessToken}" } };
+        return await LighthouseNotesAPIPost.File(CaseId, "contemporaneous-note", arg);
     }
 
-    // Add presigned string to image name
-    protected async Task ImageUploadSuccess(ImageSuccessEventArgs args)
-    {
-        // Get presigned url for image
-        string presignedUrl = await LighthouseNotesAPIGet.Image(CaseId, "contemporaneous-note", args.File.Name);
-
-        // Remove s3 endpoint as its already in the image path and set the file name to the filename ame with a presigned string
-        args.File.Name = presignedUrl.Replace(ImagePath, "");
-    }
-
-    // Image upload failed, so notify the user
-    protected void ImageUploadFailed(ImageFailedEventArgs args)
-    {
-        Snackbar.Add(
-            args.Response.StatusCode == 409
-                ? $"An image with the file name `{args.File.Name}` already exists!"
-                : "Image upload failed!", Severity.Error);
-    }
-
-    // Save rich text content to s3 bucket
+    // Save Content - Save rich text content to s3 bucket using the API
     protected async Task SaveContent()
     {
+        // Get text editor content
+        string content = await TextEditor.GetHtml();
+
         // If no content is provided show and error and return
-        if (RteValue == null)
+        if (content == null)
         {
             Snackbar.Add("You have not added any content into the rich text editor, please add content and try again.",
                 Severity.Error);
@@ -162,14 +158,17 @@ public class ContemporaneousNotesBase : ComponentBase
         HtmlDocument htmlDoc = new();
 
         // Load value into HTML
-        htmlDoc.LoadHtml(RteValue);
+        htmlDoc.LoadHtml(content);
 
-        // If content contains images
-        if (htmlDoc.DocumentNode.SelectNodes("//img") != null)
+        // Get all image elements
+        IEnumerable<HtmlNode>? imagesWithPath = htmlDoc.DocumentNode
+            .SelectNodes("//img");
 
-            // For each image that starts with S3 images path
-            foreach (HtmlNode img in htmlDoc.DocumentNode.SelectNodes("//img")
-                         .Where(u => u.Attributes["src"].Value.Contains(ImagePath)))
+        // If we have image elements
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (imagesWithPath != null)
+            // For each image that starts with .path/
+            foreach (HtmlNode img in imagesWithPath)
             {
                 // Create uri from image src
                 Uri uri = new(img.Attributes["src"].Value);
@@ -177,9 +176,57 @@ public class ContemporaneousNotesBase : ComponentBase
                 // Remove query string from url
                 string fixedUri = uri.AbsoluteUri.Replace(uri.Query, string.Empty);
 
-                // Set src from s3url/100.jpg to .path/100.jpg 
+                // Set src from s3url/100.jpg to .path/100.jpg
                 img.Attributes["src"].Value = $".path/{Path.GetFileName(fixedUri)}";
             }
+
+        // Get all span elements with the class mention
+        IEnumerable<HtmlNode>? mentions = htmlDoc.DocumentNode
+            .SelectNodes("//span[@class='mention']");
+
+        // If we have mention elements
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (mentions != null)
+            // Loop through each mention
+            foreach (HtmlNode mention in mentions)
+                // Handle exhibit and user mentions separately
+                switch (mention.Attributes["data-denotation-char"].Value)
+                {
+                    // User
+                    case "@":
+                    {
+                        // Get the user from json data
+                        API.User user = JsonSerializer.Deserialize<API.User>(
+                            HttpUtility.HtmlDecode(mention.Attributes["data-__data-json"].Value),
+                            JsonOptions.DefaultOptions)!;
+
+                        // Create the new node
+                        HtmlNode newNode =
+                            HtmlNode.CreateNode(
+                                $"<a class=\"mention-link\" href=\"/user/{user.EmailAddress}\"> @{user.DisplayName} </a>");
+
+                        // Replace the node
+                        mention.ParentNode.ReplaceChild(newNode, mention);
+                        break;
+                    }
+                    // Exhibit
+                    case "#":
+                    {
+                        // Get the exhibit from json data
+                        API.Exhibit exhibit = JsonSerializer.Deserialize<API.Exhibit>(
+                            HttpUtility.HtmlDecode(mention.Attributes["data-__data-json"].Value),
+                            JsonOptions.DefaultOptions)!;
+
+                        // Create the new node
+                        HtmlNode newNode =
+                            HtmlNode.CreateNode(
+                                $"<a class=\"mention-link\" href=\"/case/{CaseId}/exhibit/{exhibit.Id}\"> #{exhibit.Reference} </a>");
+
+                        // Replace the node
+                        mention.ParentNode.ReplaceChild(newNode, mention);
+                        break;
+                    }
+                }
 
         // Add Contemporaneous Note
         await LighthouseNotesAPIPost.ContemporaneousNote(CaseId,
@@ -187,12 +234,12 @@ public class ContemporaneousNotesBase : ComponentBase
 
         // Refresh notes, empty rich text editor, re-render component, and notify user
         await GetNotes();
-        RteValue = null;
+        await TextEditor.SetHtml(null);
         await InvokeAsync(StateHasChanged);
         Snackbar.Add("Note has successfully been added!", Severity.Success);
     }
 
-    // Change which notes are being displayed based on the data range
+    // Time range changed - Change which notes are being displayed based on the data range
     protected async Task TimeRangeChanged(DateRange? dateRange)
     {
         // This function should not be available to be called if ContemporaneousNotes are null but to satisfy null value checks
@@ -214,12 +261,13 @@ public class ContemporaneousNotesBase : ComponentBase
             return;
         }
 
-        // Set the date range on the page  
+        // Set the date range on the page
         FilterDateRange = dateRange;
 
         await PaginateNotes();
     }
 
+    // Search Query Changed - Change which notes are being displayed based on the search
     protected async Task SearchQueryChanged()
     {
         // This function should not be available to be called if ContemporaneousNotes are null but to satisfy null value checks
@@ -244,10 +292,10 @@ public class ContemporaneousNotesBase : ComponentBase
         await PaginateNotes();
     }
 
-    // Page size select change event
+    // Page size select change event - recalculate pages and update number of notes displayed
     protected async Task PageSizeChanged(int pageSize)
     {
-        // Update page size variable 
+        // Update page size variable
         PageSize = pageSize;
 
         // Re Calculate pages
@@ -257,7 +305,7 @@ public class ContemporaneousNotesBase : ComponentBase
         await PaginateNotes();
     }
 
-    // Page changed event
+    // Page changed event - move on to next page
     protected async Task PageChanged(int page)
     {
         // Update page variable
@@ -289,7 +337,7 @@ public class ContemporaneousNotesBase : ComponentBase
         await PaginateNotes();
     }
 
-    // Get notes from s3 bucket, handling errors and fetching images
+    // Paginate notes - Get notes from s3 bucket, handling errors and fetching images
     private async Task PaginateNotes()
     {
         // Empty dictionary
@@ -316,18 +364,23 @@ public class ContemporaneousNotesBase : ComponentBase
                 // Load ContemporaneousNotes Content to HTML
                 htmlDoc.LoadHtml(noteContent);
 
-                // If content contains images
-                if (htmlDoc.DocumentNode.SelectNodes("//img") != null)
+                // Get all image elements that start with ./path
+                // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+                IEnumerable<HtmlNode>? imagesWithPath = htmlDoc.DocumentNode
+                    .SelectNodes("//img")
+                    ?.Where(img => img.GetAttributeValue("src", "").Contains(".path/"));
+
+                // If we have image elements
+                if (imagesWithPath != null)
                     // For each image that starts with .path/
-                    foreach (HtmlNode img in htmlDoc.DocumentNode.SelectNodes("//img")
-                                 .Where(u => u.Attributes["src"].Value.Contains(".path/")))
+                    foreach (HtmlNode img in imagesWithPath)
                     {
                         // Create variable with file name
                         string fileName = img.Attributes["src"].Value.Replace(".path/", "");
 
-                        // Get presigned s3 url and update image src 
+                        // Get presigned s3 url and update image src
                         string presignedS3Url =
-                            await LighthouseNotesAPIGet.Image(CaseId, "contemporaneous-note", fileName);
+                            await LighthouseNotesAPIGet.File(CaseId, "contemporaneous-note", fileName);
                         img.Attributes["src"].Value = presignedS3Url;
                     }
 
@@ -364,18 +417,23 @@ public class ContemporaneousNotesBase : ComponentBase
                 // Load ContemporaneousNotes Content to HTML
                 htmlDoc.LoadHtml(noteContent);
 
-                // If content contains images
-                if (htmlDoc.DocumentNode.SelectNodes("//img") != null)
+                // Get all image elements that start with ./path
+                // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+                IEnumerable<HtmlNode>? imagesWithPath = htmlDoc.DocumentNode
+                    .SelectNodes("//img")
+                    ?.Where(img => img.GetAttributeValue("src", "").Contains(".path/"));
+
+                // If we have image elements
+                if (imagesWithPath != null)
                     // For each image that starts with .path/
-                    foreach (HtmlNode img in htmlDoc.DocumentNode.SelectNodes("//img")
-                                 .Where(u => u.Attributes["src"].Value.Contains(".path/")))
+                    foreach (HtmlNode img in imagesWithPath)
                     {
                         // Create variable with file name
                         string fileName = img.Attributes["src"].Value.Replace(".path/", "");
 
-                        // Get presigned s3 url and update image src 
+                        // Get presigned s3 url and update image src
                         string presignedS3Url =
-                            await LighthouseNotesAPIGet.Image(CaseId, "contemporaneous-note", fileName);
+                            await LighthouseNotesAPIGet.File(CaseId, "contemporaneous-note", fileName);
                         img.Attributes["src"].Value = presignedS3Url;
                     }
 
@@ -402,17 +460,23 @@ public class ContemporaneousNotesBase : ComponentBase
             // Load ContemporaneousNotes Content to HTML
             htmlDoc.LoadHtml(noteContent);
 
-            // If content contains images
-            if (htmlDoc.DocumentNode.SelectNodes("//img") != null)
+            // Get all image elements that start with ./path
+            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+            IEnumerable<HtmlNode>? imagesWithPath = htmlDoc.DocumentNode
+                .SelectNodes("//img")
+                ?.Where(img => img.GetAttributeValue("src", "").Contains(".path/"));
+
+            // If we have image elements
+            if (imagesWithPath != null)
                 // For each image that starts with .path/
-                foreach (HtmlNode img in htmlDoc.DocumentNode.SelectNodes("//img")
-                             .Where(u => u.Attributes["src"].Value.Contains(".path/")))
+                foreach (HtmlNode img in imagesWithPath)
                 {
                     // Create variable with file name
                     string fileName = img.Attributes["src"].Value.Replace(".path/", "");
 
-                    // Get presigned s3 url and update image src 
-                    string presignedS3Url = await LighthouseNotesAPIGet.Image(CaseId, "contemporaneous-note", fileName);
+                    // Get presigned s3 url and update image src
+                    string presignedS3Url =
+                        await LighthouseNotesAPIGet.File(CaseId, "contemporaneous-note", fileName);
                     img.Attributes["src"].Value = presignedS3Url;
                 }
 
@@ -425,14 +489,17 @@ public class ContemporaneousNotesBase : ComponentBase
         ContemporaneousNotes = _contemporaneousNotes;
     }
 
-    // Block user navigation if rich text editor contains content
+    // Before Navigation - Block user navigation if rich text editor contains content
     protected async Task BeforeInternalNavigation(LocationChangingContext context)
     {
-        //If RTEValue empty allow navigation
-        if (RteValue == "<p><br/></p>" || string.IsNullOrWhiteSpace(RteValue))
+        // Get text editor content
+        string content = await TextEditor.GetHtml();
+
+        //If content is empty allow navigation
+        if (content == "<p><br></p>" || string.IsNullOrWhiteSpace(content))
             return;
 
-        // RTEValue is not empty, display a modal
+        // content is not empty, display a modal
         bool? result = await Dialog.ShowMessageBox(
             "Warning",
             "Are you sure you want to leave this page without saving?",
@@ -446,134 +513,62 @@ public class ContemporaneousNotesBase : ComponentBase
             context.PreventNavigation();
     }
 
-    // Open rich text editor dialog
+    // Open rich text editor dialog - show rich text editor in a dialog on mobile devices
     protected async Task OpenRichTextEditor()
     {
         // Create dialog parameters
-        DialogParameters<ContemporaneousNoteRTEDialog> parameters = new()
+        DialogParameters<ContemporaneousNoteTextEditorDialog> parameters = new()
         {
             { p => p.CaseId, CaseId },
             { p => p.SCase, SCase },
-            { p => p.CaseUsers, CaseUsers },
-            { p => p.Exhibits, Exhibits },
-            { p => p.ImageSaveUrl, ImageSaveUrl },
-            { p => p.ImagePath, ImagePath }
+            { p => p.CaseUsers, _caseUsers },
+            { p => p.Exhibits, _exhibits }
         };
 
         // Set dialog options
         DialogOptions options = new() { FullScreen = true, CloseButton = true };
 
         // Show dialog
-        IDialogReference? dialog =
-            await Dialog.ShowAsync<ContemporaneousNoteRTEDialog>("Rich text editor", parameters, options);
+        IDialogReference dialog =
+            await Dialog.ShowAsync<ContemporaneousNoteTextEditorDialog>("Rich text editor", parameters, options);
 
         // Await for dialog result
         DialogResult? result = await dialog.Result;
 
         // If result is not canceled, means note has been added so get notes
-        if (!result.Canceled)
+        if (result is { Canceled: false })
         {
             await GetNotes();
             await InvokeAsync(StateHasChanged);
         }
     }
 
-    // Toggle collapsable panels containing notes converter
-    protected class ToggleCollapseConverter : BoolConverter<string>
+    // Toggle collapse - expand / collapse expansion panels containing notes
+    protected async Task ToggleCollapse()
     {
-        private const string TrueString = "Collapse all";
-        private const string FalseString = "Expand all";
-        private const string NullString = "Unknown";
-
-        public ToggleCollapseConverter()
+        if (ToggleCollapseValue == "Collapse all")
         {
-            SetFunc = OnSet;
-            GetFunc = OnGet;
+            await ContemporaneousNotesCollapse?.CollapseAllAsync()!;
+            ToggleCollapseValue = "Expand all";
+            await InvokeAsync(StateHasChanged);
         }
-
-        private string OnGet(bool? value)
+        else
         {
-            try
-            {
-                return value == true ? TrueString : FalseString;
-            }
-            catch (Exception e)
-            {
-                UpdateGetError("Conversion error: " + e.Message);
-                return NullString;
-            }
-        }
-
-        private bool? OnSet(string? arg)
-        {
-            if (arg == null)
-                return null;
-            try
-            {
-                switch (arg)
-                {
-                    case TrueString:
-                        ContemporaneousNotesCollapse?.ExpandAll();
-                        return true;
-                    case FalseString:
-                        ContemporaneousNotesCollapse?.CollapseAll();
-                        return false;
-                    default:
-                        return null;
-                }
-            }
-            catch (FormatException e)
-            {
-                UpdateSetError("Conversion error: " + e.Message);
-                return null;
-            }
+            await ContemporaneousNotesCollapse?.ExpandAllAsync()!;
+            ToggleCollapseValue = "Collapse all";
+            await InvokeAsync(StateHasChanged);
         }
     }
 
-    // Toggle user / exhibit mention converter
-    protected class ToggleUserMentionConverter : BoolConverter<string>
+    // Exhibit mention clicked - open exhibit details in a new tab
+    private Task ExhibitMentionClicked(API.Exhibit exhibit)
     {
-        private const string TrueString = "User mention";
-        private const string FalseString = "Exhibit mention";
-        private const string NullString = "Unknown";
+        return JSRuntime.InvokeVoidAsync("open", $"/case/{CaseId}/exhibit/{exhibit.Id}", "_blank").AsTask();
+    }
 
-        public ToggleUserMentionConverter()
-        {
-            SetFunc = OnSet;
-            GetFunc = OnGet;
-        }
-
-        private string OnGet(bool? value)
-        {
-            try
-            {
-                return value == true ? TrueString : FalseString;
-            }
-            catch (Exception e)
-            {
-                UpdateGetError("Conversion error: " + e.Message);
-                return NullString;
-            }
-        }
-
-        private bool? OnSet(string? arg)
-        {
-            if (arg == null)
-                return null;
-            try
-            {
-                return arg switch
-                {
-                    TrueString => true,
-                    FalseString => false,
-                    _ => null
-                };
-            }
-            catch (FormatException e)
-            {
-                UpdateSetError("Conversion error: " + e.Message);
-                return null;
-            }
-        }
+    // User mention clicked - open user details in a new tab
+    private Task UserMentionClicked(API.User user)
+    {
+        return JSRuntime.InvokeVoidAsync("open", $"/user/{user.EmailAddress}", "_blank").AsTask();
     }
 }

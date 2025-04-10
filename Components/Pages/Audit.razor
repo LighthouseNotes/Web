@@ -1,21 +1,21 @@
 ﻿@page "/audit"
-@using System.Globalization
 @inherits AuditBase
-@attribute [Authorize(Roles = "user")]
+@attribute [Authorize]
 
-<PageTitle> Audit </PageTitle>
+<PageTitle> Audit</PageTitle>
 
-<Page>
+<PageLoad @ref="PageLoad">
 
-    <MudText Typo="Typo.h1" Align="Align.Center"> Audit Log </MudText>
+    <MudText Typo="Typo.h1" Align="Align.Center"> Audit Log</MudText>
 
     <MudDataGrid T="API.UserAudit" ServerData="LoadGridData">
         <Columns>
-            <PropertyColumn Property="x => x.DateTime" Culture="CultureInfo.CurrentCulture" Format="@Settings.DateTimeFormat"/>
+            <PropertyColumn Property="x => x.DateTime" Culture="CultureInfo.CurrentCulture"
+                            Format="@Settings.DateTimeFormat"/>
             <PropertyColumn Property="x => x.Action"/>
         </Columns>
         <PagerContent>
             <MudDataGridPager T="API.UserAudit"/>
         </PagerContent>
     </MudDataGrid>
-</Page>
+</PageLoad>
