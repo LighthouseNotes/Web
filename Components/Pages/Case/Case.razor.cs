@@ -34,6 +34,9 @@ public class CaseBase : ComponentBase
 
         // Remove any users already added to the case from the drop-down
         SCase.Users.ForEach(user => _users.RemoveAll(u => u.EmailAddress == user.EmailAddress));
+
+        // Re-render component
+        await InvokeAsync(StateHasChanged);
     }
 
     //  Lifecycle method called after the component has rendered - get settings
